@@ -195,8 +195,8 @@ def build_context(data: dict) -> dict:
     ctx["logo_full_color"] = logo_data_uri("hy_logo_full_color.png")
     ctx["logo_full_white"] = logo_data_uri("hy_logo_full_white.png")
     ctx["logo_compact"] = logo_data_uri("hy_logo_compact_color.png")
-    ctx["font_bold"] = font_data_uri("KoPubWorld-Dotum-Bold.woff2")
-    ctx["font_medium"] = font_data_uri("KoPubWorld-Dotum-Medium.woff2")
+    ctx["font_bold"] = font_data_uri("KoPubWorld-Dotum-Pro-Bold.woff2")
+    ctx["font_light"] = font_data_uri("KoPubWorld-Dotum-Pro-Light.woff2")
     return ctx
 
 
