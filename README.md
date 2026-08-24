@@ -8,7 +8,8 @@
 ```
 templates/
   daily_report_template.md.j2    # 리포트 양식 (마크다운)
-  daily_report_template.html.j2  # 리포트 양식 (인쇄/이메일용 스타일 HTML)
+  daily_report_template.html.j2  # 리포트 양식 (인쇄/이메일용 스타일 HTML, 한양증권 CI 적용)
+  assets/                        # 한양증권 CI 로고 (실제 리서치 자료 PDF에서 추출)
 scripts/
   render_report.py    # 데이터 JSON -> 양식에 채워 .md/.html 생성
   fetch_pykrx.py       # (선택) pykrx로 코스피/코스닥 지수·등락률 상위종목 자동 수집
@@ -30,6 +31,15 @@ data/                   # 생성된 리포트의 원본 데이터 JSON (자동 �
 
 `templates/*.j2` 파일 자체가 실제 사용하는 양식이자 렌더링 템플릿이다. 문구나 섹션을
 바꾸고 싶으면 이 파일을 직접 수정하면 된다.
+
+### CI (한양증권 브랜드)
+
+HTML 리포트 상단/하단의 로고는 실제 한양증권 공식 리서치 자료(PDF)에서 추출한 CI 원본
+이미지다(`templates/assets/hy_logo_*.png`). CI 컬러(딥퍼플 그라데이션: `#2D2864` →
+`#754BE4` → `#AB7CFB`)도 해당 로고 이미지에서 실측한 값을 `daily_report_template.html.j2`의
+CSS 변수(`--hy-deep`, `--hy-mid`, `--hy-light`)로 사용한다. 로고나 컬러가 바뀌면
+`templates/assets/`의 PNG 파일을 교체하고 `render_report.py`의 `logo_data_uri()`가
+자동으로 다시 인코딩해 반영한다.
 
 ## 수동으로 한 번 생성해보기
 

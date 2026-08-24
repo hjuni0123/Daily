@@ -8,13 +8,13 @@
   * { box-sizing: border-box; }
 
   :root {
-    --hy-deep: #2B1A52;      /* 딥퍼플 - CI 주조색 */
-    --hy-mid: #5A3AA8;
-    --hy-light: #8A63D6;
-    --hy-tint: #F3EFFB;      /* 옅은 퍼플 배경 */
-    --hy-tint-line: #DFD3F2;
+    --hy-deep: #2D2864;      /* 한양증권 CI 워드마크 색 */
+    --hy-mid: #754BE4;       /* 한양증권 CI 그라데이션 중간색 */
+    --hy-light: #AB7CFB;     /* 한양증권 CI 그라데이션 밝은색 */
+    --hy-tint: #F5F3FA;      /* 옅은 배경 */
+    --hy-tint-line: #E2DBF2;
     --ink: #1B1626;
-    --ink-soft: #574F66;
+    --ink-soft: #58536A;
     --paper: #ffffff;
     --up: #D6273C;           /* 상승 - 국내 관행상 적색 */
     --down: #1D4ED8;         /* 하락 - 청색 */
@@ -26,58 +26,54 @@
     background: var(--paper);
     max-width: 780px;
     margin: 0 auto;
-    padding: 0 0 28px 0;
+    padding: 0 0 24px 0;
     line-height: 1.55;
     font-size: 13.5px;
   }
 
   .masthead {
-    background: linear-gradient(135deg, var(--hy-deep) 0%, var(--hy-mid) 65%, var(--hy-light) 100%);
-    color: #fff;
-    padding: 16px 24px;
+    background: var(--hy-tint);
+    padding: 12px 24px;
     display: flex;
     align-items: center;
     justify-content: space-between;
     gap: 12px;
   }
-  .masthead .brand { display: flex; align-items: center; gap: 10px; }
-  .hy-badge {
-    width: 40px; height: 40px; flex: none;
-    border-radius: 10px;
-    background: rgba(255,255,255,0.14);
-    border: 1px solid rgba(255,255,255,0.55);
-    display: flex; align-items: center; justify-content: center;
-    font-weight: 800; font-size: 15px; letter-spacing: 0.5px;
-    color: #fff;
+  .masthead img { height: 26px; display: block; }
+  .masthead .doc-label { text-align: right; font-size: 11px; color: var(--ink-soft); line-height: 1.5; }
+  .masthead .doc-label .eyebrow {
+    font-size: 10px; font-weight: 700; letter-spacing: 1.2px; text-transform: uppercase;
+    color: var(--hy-mid);
   }
-  .brand-text .name { font-size: 16px; font-weight: 700; letter-spacing: 0.3px; }
-  .brand-text .tagline { font-size: 10.5px; opacity: 0.85; letter-spacing: 0.5px; text-transform: uppercase; }
-  .masthead .doc-label { text-align: right; font-size: 11.5px; opacity: 0.92; line-height: 1.5; }
-  .masthead .doc-label .title { font-size: 14px; font-weight: 700; }
 
-  .meta-bar {
-    padding: 10px 24px;
+  .title-block { padding: 18px 24px 12px 24px; border-bottom: 2px solid var(--hy-deep); }
+  .title-block h1 { margin: 0 0 6px 0; font-size: 21px; color: var(--hy-deep); letter-spacing: -0.2px; }
+  .title-block .subline { font-size: 12px; color: var(--ink-soft); display: flex; justify-content: space-between; flex-wrap: wrap; gap: 4px; }
+
+  .quickbar {
+    display: flex; gap: 10px; margin: 12px 24px 0 24px;
+  }
+  .quickbar .pill {
+    flex: 1; border: 1px solid var(--hy-tint-line); border-radius: 4px;
+    padding: 6px 10px; font-size: 12px; display: flex; justify-content: space-between; align-items: baseline;
     background: var(--hy-tint);
-    border-bottom: 2px solid var(--hy-deep);
-    font-size: 11.5px;
-    color: var(--ink-soft);
-    display: flex;
-    justify-content: space-between;
-    flex-wrap: wrap;
-    gap: 6px;
   }
+  .quickbar .pill b { color: var(--ink); font-size: 12.5px; }
 
-  .content { padding: 0 24px; }
+  .content { padding: 4px 24px 0 24px; }
 
   h2 {
-    font-size: 14px; color: var(--hy-deep); background: var(--hy-tint);
-    padding: 6px 10px; border-left: 4px solid var(--hy-deep); margin: 20px 0 10px 0;
-    letter-spacing: 0.2px;
+    font-size: 13.5px; color: var(--hy-deep); font-weight: 700;
+    padding-bottom: 4px; margin: 20px 0 10px 0;
+    border-bottom: 1px solid var(--hy-tint-line);
+    letter-spacing: 0.1px;
   }
   .table-wrap { overflow-x: auto; }
   table { width: 100%; border-collapse: collapse; margin-bottom: 8px; font-size: 12.5px; }
-  th, td { border: 1px solid var(--hy-tint-line); padding: 6px 8px; text-align: right; font-variant-numeric: tabular-nums; }
-  th { background: var(--hy-deep); color: #fff; font-weight: 600; }
+  table.ruled { border-top: 1.5px solid var(--hy-deep); border-bottom: 1.5px solid var(--hy-deep); }
+  table.ruled th { border-bottom: 1px solid var(--hy-deep); }
+  th, td { padding: 6px 8px; text-align: right; font-variant-numeric: tabular-nums; }
+  th { font-weight: 700; color: var(--ink); }
   td:first-child, th:first-child { text-align: left; }
   .up { color: var(--up); font-weight: 700; }
   .down { color: var(--down); font-weight: 700; }
@@ -85,40 +81,54 @@
   .summary-line b { color: var(--hy-deep); }
   ul { margin: 4px 0; padding-left: 20px; }
   li { margin-bottom: 3px; font-size: 13px; }
-  .disclaimer {
-    margin-top: 16px; padding: 10px 12px; background: var(--hy-tint);
-    border: 1px solid var(--hy-tint-line); font-size: 11px; color: var(--ink-soft); border-radius: 4px;
+
+  .compliance {
+    margin-top: 18px; padding: 10px 12px; background: var(--hy-tint);
+    border: 1px solid var(--hy-tint-line); border-radius: 4px;
   }
+  .compliance .heading { font-size: 11px; font-weight: 700; color: var(--hy-deep); margin-bottom: 4px; }
+  .compliance ul { margin: 0; padding-left: 16px; }
+  .compliance li { font-size: 10.5px; color: var(--ink-soft); margin-bottom: 2px; list-style: none; position: relative; }
+  .compliance li::before { content: "▪"; color: var(--hy-mid); position: absolute; left: -14px; }
+  .compliance p { font-size: 10.5px; color: var(--ink-soft); margin: 6px 0 0 0; }
+
   .footer {
-    margin-top: 14px; padding-top: 8px; border-top: 1px solid var(--hy-tint-line);
-    font-size: 11px; color: #8a8394; text-align: right;
+    margin-top: 14px; padding: 10px 24px 0 24px;
+    display: flex; align-items: center; justify-content: space-between;
+    border-top: 1px solid var(--hy-tint-line);
   }
+  .footer img { height: 16px; opacity: 0.85; }
+  .footer .meta { font-size: 10.5px; color: #9691a3; text-align: right; }
 </style>
 </head>
 <body>
 
 <div class="masthead">
-  <div class="brand">
-    <div class="hy-badge">HY</div>
-    <div class="brand-text">
-      <div class="name">한양증권</div>
-      <div class="tagline">Hanyang Securities · Heritage &amp; Young</div>
-    </div>
-  </div>
+  <img src="{{ logo_compact }}" alt="한양증권 HANYANG SECURITIES">
   <div class="doc-label">
-    <div class="title">Daily Market Brief</div>
-    <div>{{ date }} ({{ weekday }}) 장마감 기준</div>
+    <div class="eyebrow">Daily Market Brief</div>
+    <div>{{ department }} · {{ branch_name }}</div>
   </div>
 </div>
-<div class="meta-bar">
-  <span>{{ department }} · {{ branch_name }}</span>
-  <span>작성: {{ author }} &nbsp;|&nbsp; 발행 {{ generated_at }}</span>
+
+<div class="title-block">
+  <h1>데일리 마켓 브리핑</h1>
+  <div class="subline">
+    <span>{{ date }} ({{ weekday }}) 장마감 기준</span>
+    <span>작성: {{ author }} &nbsp;|&nbsp; 발행 {{ generated_at }}</span>
+  </div>
+</div>
+
+<div class="quickbar">
+  <div class="pill"><span>KOSPI</span> <b class="{{ kospi.trend_class }}">{{ kospi.close }} {{ kospi.trend_symbol }} {{ kospi.change_pct }}%</b></div>
+  <div class="pill"><span>KOSDAQ</span> <b class="{{ kosdaq.trend_class }}">{{ kosdaq.close }} {{ kosdaq.trend_symbol }} {{ kosdaq.change_pct }}%</b></div>
+  <div class="pill"><span>USD/KRW</span> <b>{{ fx.rate }} ({{ fx.change }})</b></div>
 </div>
 
 <div class="content">
 
 <h2>1. 오늘의 마켓 요약</h2>
-<div class="table-wrap"><table>
+<div class="table-wrap"><table class="ruled">
   <tr><th>구분</th><th>종가</th><th>등락</th><th>등락률</th><th>거래대금</th></tr>
   <tr><td>KOSPI</td><td>{{ kospi.close }}</td><td class="{{ kospi.trend_class }}">{{ kospi.trend_symbol }} {{ kospi.change_pt }}</td><td class="{{ kospi.trend_class }}">{{ kospi.change_pct }}%</td><td>{{ kospi.value }}</td></tr>
   <tr><td>KOSDAQ</td><td>{{ kosdaq.close }}</td><td class="{{ kosdaq.trend_class }}">{{ kosdaq.trend_symbol }} {{ kosdaq.change_pt }}</td><td class="{{ kosdaq.trend_class }}">{{ kosdaq.change_pct }}%</td><td>{{ kosdaq.value }}</td></tr>
@@ -132,7 +142,7 @@
 <div class="summary-line"><b>약세 업종</b> {{ sector_bottom }}</div>
 
 <h2>3. 오늘의 이슈 종목</h2>
-<div class="table-wrap"><table>
+<div class="table-wrap"><table class="ruled">
   <tr><th>종목명(코드)</th><th>등락률</th><th style="text-align:left">이슈 및 이유</th></tr>
   {% for s in issue_stocks -%}
   <tr><td>{{ s.name }}({{ s.ticker }})</td><td class="{{ s.trend_class }}">{{ s.trend_symbol }} {{ s.change_pct }}%</td><td style="text-align:left">{{ s.reason }}</td></tr>
@@ -156,12 +166,21 @@
 <h2>5. 참고사항</h2>
 <div class="summary-line">{{ notes }}</div>
 
-<div class="disclaimer">
-본 자료는 한양증권 {{ department }} {{ branch_name }}에서 고객 정보 제공 목적으로 작성한 자료로, 특정 금융투자상품의 매매를 권유하기 위해 작성된 것이 아닙니다. 본 자료에 수록된 내용은 신뢰할 수 있는 자료 및 정보를 바탕으로 작성되었으나 당사가 그 정확성이나 완전성을 보장하지 않으며, 시장 상황에 따라 실제와 다를 수 있습니다. 투자판단 및 그 결과에 대한 책임은 투자자 본인에게 있습니다.
+<div class="compliance">
+  <div class="heading">Compliance Notice</div>
+  <ul>
+    <li>본 자료는 {{ department }} {{ branch_name }}에서 고객의 투자판단에 참고가 되는 정보제공을 목적으로 작성한 자료이며, 특정 금융투자상품의 매매를 권유하기 위해 작성된 것이 아닙니다.</li>
+    <li>본 자료는 기관투자자 또는 제3자에게 사전 제공된 사실이 없습니다.</li>
+  </ul>
+  <p>본 자료에 수록된 내용은 신뢰할 수 있는 자료 및 정보를 바탕으로 작성되었으나 당사가 그 정확성이나 완전성을 보장하지 않으며, 시장 상황에 따라 실제와 다를 수 있습니다. 본 자료는 어떠한 경우에도 고객의 투자 결과와 관련된 법적 책임소재의 증빙자료로 사용될 수 없으며, 투자판단 및 그 결과에 대한 책임은 투자자 본인에게 있습니다.</p>
 </div>
 
-<div class="footer">한양증권 {{ department }} {{ branch_name }} · 작성: {{ author }} · 문의: {{ contact }}</div>
-
 </div>
+
+<div class="footer">
+  <img src="{{ logo_compact }}" alt="한양증권">
+  <div class="meta">{{ department }} {{ branch_name }} · 문의: {{ contact }}</div>
+</div>
+
 </body>
 </html>

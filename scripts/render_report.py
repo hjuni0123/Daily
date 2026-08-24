@@ -10,6 +10,7 @@
     python3 scripts/render_report.py path/to/data.json --outdir reports
 """
 import argparse
+import base64
 import json
 import sys
 from pathlib import Path
@@ -18,6 +19,12 @@ from jinja2 import Environment, FileSystemLoader
 
 ROOT = Path(__file__).resolve().parent.parent
 TEMPLATE_DIR = ROOT / "templates"
+ASSET_DIR = TEMPLATE_DIR / "assets"
+
+
+def logo_data_uri(filename: str) -> str:
+    data = (ASSET_DIR / filename).read_bytes()
+    return f"data:image/png;base64,{base64.b64encode(data).decode()}"
 
 
 def _as_float(value):
@@ -71,6 +78,9 @@ def build_context(data: dict) -> dict:
     ctx.setdefault("issue_stocks", [])
     ctx.setdefault("checkpoints_tomorrow", [])
     ctx.setdefault("checkpoints_week", [])
+    ctx["logo_full_color"] = logo_data_uri("hy_logo_full_color.png")
+    ctx["logo_full_white"] = logo_data_uri("hy_logo_full_white.png")
+    ctx["logo_compact"] = logo_data_uri("hy_logo_compact_color.png")
     return ctx
 
 
