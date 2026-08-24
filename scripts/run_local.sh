@@ -20,10 +20,14 @@
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
-DATE="${1:-$(date +%F)}"
+DATE="$(date +%F)"
 AUTO=false
 for arg in "$@"; do
-  [ "$arg" = "--auto" ] && AUTO=true
+  if [ "$arg" = "--auto" ]; then
+    AUTO=true
+  else
+    DATE="$arg"
+  fi
 done
 
 DATA_JSON="data/${DATE}.json"
