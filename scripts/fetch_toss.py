@@ -113,14 +113,26 @@ def stock_names(symbols: list) -> dict:
         return {}
 
 
+MIN_TRADING_AMOUNT_KRW = 3_000_000_000  # 30억원 미만 거래대금은 제외 (품질 낮은 픽 방지)
+
+
 def top_movers(n: int = 4) -> list:
+    """등락률 상위(급상승/급하락) 후보를 가져오되, 투자유의종목(관리종목·정리매매 등 —
+    가격제한폭이 없어 ±30%를 벗어나는 비정상적인 등락이 나올 수 있음)과 거래대금이
+    너무 적은 종목은 제외한다. 여유 있게 더 뽑은 뒤 필터링해서 n개를 채운다."""
+    fetch_n = max(n * 3, 10)
     gainers = _get("/api/v1/rankings", {
-        "type": "TOP_GAINERS", "marketCountry": "KR", "duration": "1d", "count": n // 2 + n % 2,
+        "type": "TOP_GAINERS", "marketCountry": "KR", "duration": "1d",
+        "count": fetch_n, "excludeInvestmentCaution": True,
     })["rankings"]
     time.sleep(0.1)
     losers = _get("/api/v1/rankings", {
-        "type": "TOP_LOSERS", "marketCountry": "KR", "duration": "1d", "count": n // 2,
+        "type": "TOP_LOSERS", "marketCountry": "KR", "duration": "1d",
+        "count": fetch_n, "excludeInvestmentCaution": True,
     })["rankings"]
+
+    gainers = [r for r in gainers if int(r["tradingAmount"]) >= MIN_TRADING_AMOUNT_KRW][: n // 2 + n % 2]
+    losers = [r for r in losers if int(r["tradingAmount"]) >= MIN_TRADING_AMOUNT_KRW][: n // 2]
 
     picks = gainers + losers
     names = stock_names([p["symbol"] for p in picks])
