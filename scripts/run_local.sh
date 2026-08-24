@@ -64,7 +64,12 @@ if [ -d scripts/docx/node_modules ]; then
 else
   (cd scripts/docx && npm install)
 fi
-node scripts/docx/render_docx.js "$DATA_JSON" "reports/${DATE}_market_report.docx"
+DOCX_PATH="reports/${DATE}_market_report.docx"
+node scripts/docx/render_docx.js "$DATA_JSON" "$DOCX_PATH"
+
+if [ "$(uname)" = "Darwin" ]; then
+  open "$DOCX_PATH"
+fi
 
 echo ""
 echo "완료: reports/${DATE}_market_report.{md,html,docx}"
