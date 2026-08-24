@@ -13,6 +13,7 @@ templates/
 scripts/
   render_report.py    # 데이터 JSON -> 양식에 채워 .md/.html 생성
   fetch_pykrx.py       # (선택) pykrx로 코스피/코스닥 지수·등락률 상위종목 자동 수집
+  toss_client.py       # (선택, 미검증) 토스증권 Open API 클라이언트 초안
   requirements.txt
 docs/
   AUTOMATION_GUIDE.md  # 매일 자동 실행되는 세션이 따르는 절차서
@@ -67,6 +68,22 @@ python3 scripts/render_report.py reports/sample/2026-08-21_sample.json --outdir 
 > (WebSearch 기반). 만약 KRX 접근이 가능한 자체 서버/PC에서 크론으로 돌린다면
 > `scripts/fetch_pykrx.py`로 지수·등락률 데이터를 더 정확하게 자동 수집할 수 있다.
 > 자세한 내용은 `docs/AUTOMATION_GUIDE.md` 참고.
+
+### 토스증권 Open API (선택, 미검증)
+
+`scripts/toss_client.py`에 OAuth2 client_credentials 방식의 클라이언트 초안을
+넣어뒀다. **아직 실제로 검증되지 않았다** — 이 리포지토리가 개발되는 환경(조직
+방화벽)에서 `developers.tossinvest.com` / `openapi.tossinvest.com` 접속이 모두
+막혀 있어서 1차 문서를 직접 확인하거나 실제 호출을 테스트하지 못했다(공개 검색
+결과만으로 작성). 사용하려면:
+
+1. https://developers.tossinvest.com 문서와 `scripts/toss_client.py`의 엔드포인트를
+   대조해서 검증한다 (특히 토큰 발급 경로, 시세 조회 경로, 응답 스키마).
+2. API 키는 저장소 루트의 `.env` 파일에 넣는다 (`.env.example` 참고). `.env`는
+   `.gitignore`에 등록되어 있어 **절대 커밋되지 않는다** — 코드에도 하드코딩하지 않는다.
+3. **이 API 서버도 KRX와 마찬가지로 이 개발 환경에서는 접속이 막혀 있다.** 매일
+   자동 실행되는 Routine도 같은 종류의 환경에서 돌기 때문에, 실제로 쓰려면 방화벽
+   제약이 없는 사용자의 로컬 PC나 자체 서버에서 크론으로 돌리는 방식이어야 한다.
 
 ## 배포 방법
 
