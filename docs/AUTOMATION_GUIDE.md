@@ -121,21 +121,18 @@
 크론으로 설정해야 한다):
 
 - **`scripts/run_local.sh`** — 로컬에서 장마감 직후 실행하는 원스톱 스크립트.
-  `scripts/fetch_pykrx.py`로 지수·등락률 상위종목·최근 10거래일 차트(PNG)까지
-  몇 초 안에 자동 수집한 뒤, 제목/SIGNAL·KEY·STEP/이슈종목 이유/캘린더/지점
-  대응처럼 **판단이 필요한 항목만** TODO로 표시해서 사람이 채우게 하고, 그 다음
-  `.md`/`.html`/`.docx`를 렌더링한다. `--auto`로 실행하면 TODO를 그대로 둔 채
-  바로 렌더링한다(사람 개입 없이 크론으로 돌릴 때).
-- 이렇게 하면 **가격·차트는 pykrx 실시간 데이터로 몇 초 안에 정확하게**, "왜
-  움직였는지" 같은 판단은 사람이 자기가 이미 아는 내용으로 빠르게(보통 뉴스
-  검색보다 훨씬 빠름) 채우는 구조라 15:30~15:40 목표를 실제로 맞출 수 있다.
-- `scripts/toss_client.py`(`.env`에 `TOSS_API_KEY`/`TOSS_API_SECRET` 필요, 사용 전
-  https://developers.tossinvest.com 문서와 엔드포인트 대조 검증 필수 — 아직
-  미검증)로 pykrx 대신 토스증권 시세를 가져오는 것도 가능하다.
-- 판단이 필요한 항목까지 사람 개입 없이 완전 자동화하려면, 이 로컬 스크립트가
-  만든 정확한 숫자 JSON을 Claude API(WebSearch 툴 포함)에 넘겨 이유·캘린더·
-  지점 대응까지 채우게 하는 구조를 추가로 만들면 된다 — 지금은 구현돼 있지
-  않다.
+  1) `.env`에 `TOSS_API_KEY`가 있으면 `scripts/fetch_toss.py`(토스증권 Open
+  API, 검증 완료)로, 없으면 `scripts/fetch_pykrx.py`(KRX)로 지수·환율·수급·
+  등락률 상위종목·차트까지 몇 초 안에 수집한다. 2) `.env`에
+  `ANTHROPIC_API_KEY`가 있으면 `scripts/fill_with_claude.py`가 웹서치로
+  제목/SIGNAL·KEY·STEP/이슈종목 이유/캘린더/지점 대응까지 자동으로 채운다
+  (숫자는 절대 건드리지 않고 1단계에서 가져온 실제 값만 인용한다). 키가 없으면
+  사람이 TODO를 직접 채우게 대기한다(`--auto`면 TODO를 둔 채 진행). 3)
+  `.md`/`.html`/`.docx`를 렌더링한다.
+- `TOSS_API_KEY`+`ANTHROPIC_API_KEY`가 모두 `.env`에 있으면 **완전 무인
+  자동화**다 — 가격·차트는 토스 API로 정확하게, "왜 움직였는지"·캘린더·지점
+  대응은 Claude 웹서치로 채워져 사람 개입 없이 15:30~15:40 안에 완성된다.
+  `ANTHROPIC_API_KEY`는 https://console.anthropic.com 에서 발급한다.
 
 크론 예시 (평일 15:30 KST 장마감 직후, 사람이 나중에 확인):
 ```
