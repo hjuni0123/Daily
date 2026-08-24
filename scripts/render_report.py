@@ -24,6 +24,9 @@ ASSET_DIR = TEMPLATE_DIR / "assets"
 
 TREEMAP_DX = 1000.0
 TREEMAP_DY = 300.0
+# templates/daily_report_template.html.j2 의 .heatmap { height: ... } 와 맞춰야 한다.
+HEATMAP_CSS_HEIGHT_PX = 195
+COMPACT_BOX_THRESHOLD_PX = 34
 
 PERSISTENCE_CLASS = {
     "높음": "pill-strong",
@@ -125,6 +128,8 @@ def build_treemap(sectors: list) -> list:
         sector["w_pct"] = round(rect["dx"] / TREEMAP_DX * 100, 3)
         sector["h_pct"] = round(rect["dy"] / TREEMAP_DY * 100, 3)
         sector["weight_pct"] = round(w / total * 100, 1)
+        box_px = sector["h_pct"] / 100 * HEATMAP_CSS_HEIGHT_PX
+        sector["compact"] = box_px < COMPACT_BOX_THRESHOLD_PX
         out.append(sector)
     return out
 

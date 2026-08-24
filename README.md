@@ -15,6 +15,9 @@ scripts/
   fetch_pykrx.py       # (선택) pykrx로 코스피/코스닥 지수·등락률 상위종목 자동 수집
   toss_client.py       # (선택, 미검증) 토스증권 Open API 클라이언트 초안
   requirements.txt
+  docx/
+    render_docx.js      # 데이터 JSON -> 동일 양식의 .docx(워드) 생성
+    package.json
 docs/
   AUTOMATION_GUIDE.md  # 매일 자동 실행되는 세션이 따르는 절차서
 reports/
@@ -66,7 +69,16 @@ base64로 인코딩해 HTML에 `@font-face`로 직접 삽입한다 — 파일 �
 ```bash
 pip install -r scripts/requirements.txt
 python3 scripts/render_report.py reports/sample/2026-08-24_sample.json --outdir /tmp/out
+
+# 워드(.docx) 버전도 필요하면
+cd scripts/docx && npm install && cd ../..
+node scripts/docx/render_docx.js reports/sample/2026-08-24_sample.json /tmp/out/2026-08-24_market_report.docx
 ```
+
+`.docx`는 사용자가 제공한 워드 양식(같은 "시장 마감 브리프" 레이아웃)을 `docx`(npm)로
+그대로 재현한다. 로고는 이미지로, 업종 히트맵은 병합 셀 표로 시가총액 비중에 맞춰
+자동 배치된다. 서체는 Word 표준 한글 서체(맑은 고딕)를 쓴다 — HTML처럼 커스텀 폰트를
+파일에 내장하는 기능은 워드 문서 포맷 특성상 지원하지 않는다.
 
 `reports/sample/2026-08-24_sample.json` 은 **포맷 시연용 예시 데이터**다 (실제 시황 아님).
 실제 리포트를 만들 때는 이 파일을 참고해 같은 스키마로 오늘 데이터를 채운
@@ -74,12 +86,16 @@ python3 scripts/render_report.py reports/sample/2026-08-24_sample.json --outdir 
 
 ## 매일 자동 생성
 
-`docs/AUTOMATION_GUIDE.md`에 정의된 절차대로, 매일 평일 장마감 후(16:00 KST) 다음이
-자동으로 실행되도록 스케줄(Routine)이 설정되어 있다:
+`docs/AUTOMATION_GUIDE.md`에 정의된 절차대로, **매일 평일 장마감 직후(15:30 KST) 자동
+발동**돼 늦어도 15:40 KST까지 완성을 목표로 스케줄(Routine)이 설정되어 있다. 사용자가
+따로 뭔가 보내지 않아도 매일 자동으로 실행된다:
 
-1. WebSearch로 당일 코스피/코스닥 시황, 이슈 종목과 그 이유, 단기 체크포인트를 조사
+1. WebSearch로 당일 코스피/코스닥 시황, 수급, 업종, 이슈 종목과 그 이유, 캘린더를 조사
+   (뉴스 기사·공식 거래소 자료만 근거로 사용, 위키/블로그/예측 사이트 등은 배제 —
+   확인 안 되는 수치는 지어내지 않고 "-"로 비움)
 2. `data/{날짜}.json`으로 데이터 정리
-3. `scripts/render_report.py`로 `.md`/`.html` 리포트 생성
+3. `scripts/render_report.py` + `scripts/docx/render_docx.js`로 `.md`/`.html`/`.docx`
+   세 포맷 모두 생성
 4. 생성된 리포트 파일을 사용자에게 알림/전달
 5. 저장소에 커밋해 이력 보관
 
