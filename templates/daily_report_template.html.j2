@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<title>{{ date }} 데일리 마켓 브리핑</title>
+<style>
+  @page { size: A4; margin: 16mm 14mm; }
+  * { box-sizing: border-box; }
+  body {
+    font-family: "Malgun Gothic", "Apple SD Gothic Neo", "Noto Sans KR", sans-serif;
+    color: #1a1a2e;
+    background: #ffffff;
+    max-width: 780px;
+    margin: 0 auto;
+    padding: 28px 24px;
+    line-height: 1.55;
+    font-size: 14px;
+  }
+  .table-wrap { overflow-x: auto; }
+  .header { border-bottom: 3px solid #14213d; padding-bottom: 12px; margin-bottom: 18px; }
+  .header h1 { font-size: 22px; margin: 0 0 4px 0; color: #14213d; }
+  .header .meta { font-size: 12.5px; color: #555; }
+  h2 {
+    font-size: 15px; color: #14213d; background: #eef1f8;
+    padding: 5px 10px; border-left: 4px solid #14213d; margin: 20px 0 10px 0;
+  }
+  table { width: 100%; border-collapse: collapse; margin-bottom: 8px; font-size: 13px; }
+  th, td { border: 1px solid #d8dce6; padding: 6px 8px; text-align: right; }
+  th { background: #14213d; color: #fff; font-weight: 600; }
+  td:first-child, th:first-child { text-align: left; }
+  .up { color: #d62828; font-weight: 600; }
+  .down { color: #1d4ed8; font-weight: 600; }
+  .summary-line { margin: 4px 0; font-size: 13.5px; }
+  .summary-line b { color: #14213d; }
+  ul { margin: 4px 0; padding-left: 20px; }
+  li { margin-bottom: 3px; font-size: 13.5px; }
+  .disclaimer {
+    margin-top: 16px; padding: 10px 12px; background: #f7f4ea;
+    border: 1px solid #e3dcc4; font-size: 11.5px; color: #6b6146; border-radius: 4px;
+  }
+  .footer { margin-top: 14px; font-size: 11.5px; color: #888; text-align: right; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>📈 데일리 마켓 브리핑</h1>
+  <div class="meta">{{ date }} ({{ weekday }}) 장마감 기준 &nbsp;|&nbsp; {{ branch_name }} &nbsp;|&nbsp; 작성: {{ author }} &nbsp;|&nbsp; 발행 {{ generated_at }}</div>
+</div>
+
+<h2>1. 오늘의 마켓 요약</h2>
+<div class="table-wrap"><table>
+  <tr><th>구분</th><th>종가</th><th>등락</th><th>등락률</th><th>거래대금</th></tr>
+  <tr><td>KOSPI</td><td>{{ kospi.close }}</td><td class="{{ kospi.trend_class }}">{{ kospi.change_pt }}</td><td class="{{ kospi.trend_class }}">{{ kospi.change_pct }}%</td><td>{{ kospi.value }}</td></tr>
+  <tr><td>KOSDAQ</td><td>{{ kosdaq.close }}</td><td class="{{ kosdaq.trend_class }}">{{ kosdaq.change_pt }}</td><td class="{{ kosdaq.trend_class }}">{{ kosdaq.change_pct }}%</td><td>{{ kosdaq.value }}</td></tr>
+</table></div>
+<div class="summary-line"><b>원/달러 환율</b> {{ fx.rate }}원 ({{ fx.change }})</div>
+<div class="summary-line"><b>전일 미국 증시</b> 다우 {{ us.dow }} · S&amp;P500 {{ us.sp500 }} · 나스닥 {{ us.nasdaq }}</div>
+<div class="summary-line"><b>오늘의 한줄 시황</b> {{ market_comment }}</div>
+
+<h2>2. 업종 동향</h2>
+<div class="summary-line"><b>강세 업종</b> {{ sector_top }}</div>
+<div class="summary-line"><b>약세 업종</b> {{ sector_bottom }}</div>
+
+<h2>3. 오늘의 이슈 종목</h2>
+<div class="table-wrap"><table>
+  <tr><th>종목명(코드)</th><th>등락률</th><th style="text-align:left">이슈 및 이유</th></tr>
+  {% for s in issue_stocks -%}
+  <tr><td>{{ s.name }}({{ s.ticker }})</td><td>{{ s.change_pct }}%</td><td style="text-align:left">{{ s.reason }}</td></tr>
+  {% endfor %}
+</table></div>
+
+<h2>4. 단기 체크포인트</h2>
+<div class="summary-line"><b>내일(D+1)</b></div>
+<ul>
+{% for item in checkpoints_tomorrow -%}
+  <li>{{ item }}</li>
+{% endfor %}
+</ul>
+<div class="summary-line"><b>이번 주</b></div>
+<ul>
+{% for item in checkpoints_week -%}
+  <li>{{ item }}</li>
+{% endfor %}
+</ul>
+
+<h2>5. 참고사항</h2>
+<div class="summary-line">{{ notes }}</div>
+
+<div class="disclaimer">
+본 자료는 정보 제공 목적으로 작성되었으며 특정 종목의 매매를 권유하는 것이 아닙니다. 시장 상황에 따라 실제 결과와 다를 수 있으며, 투자판단 및 그 결과에 대한 책임은 투자자 본인에게 있습니다.
+</div>
+
+<div class="footer">작성자: {{ author }} ({{ branch_name }}) · 문의: {{ contact }}</div>
+
+</body>
+</html>

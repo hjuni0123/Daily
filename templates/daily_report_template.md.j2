@@ -1,0 +1,51 @@
+# 📈 데일리 마켓 브리핑
+
+**{{ date }} ({{ weekday }}) 장마감 기준**
+{{ branch_name }} | 작성: {{ author }} | 발행 {{ generated_at }}
+
+---
+
+## 1. 오늘의 마켓 요약
+
+| 구분 | 종가 | 등락 | 등락률 | 거래대금 |
+|---|---:|---:|---:|---:|
+| KOSPI | {{ kospi.close }} | {{ kospi.change_pt }} | {{ kospi.change_pct }}% | {{ kospi.value }} |
+| KOSDAQ | {{ kosdaq.close }} | {{ kosdaq.change_pt }} | {{ kosdaq.change_pct }}% | {{ kosdaq.value }} |
+
+- **원/달러 환율**: {{ fx.rate }}원 ({{ fx.change }})
+- **전일 미국 증시**: 다우 {{ us.dow }} · S&P500 {{ us.sp500 }} · 나스닥 {{ us.nasdaq }}
+- **오늘의 한줄 시황**: {{ market_comment }}
+
+## 2. 업종 동향
+
+- **강세 업종**: {{ sector_top }}
+- **약세 업종**: {{ sector_bottom }}
+
+## 3. 오늘의 이슈 종목
+
+| 종목명(코드) | 등락률 | 이슈 및 이유 |
+|---|---:|---|
+{% for s in issue_stocks -%}
+| {{ s.name }}({{ s.ticker }}) | {{ s.change_pct }}% | {{ s.reason }} |
+{% endfor %}
+
+## 4. 단기 체크포인트
+
+**내일(D+1) 체크포인트**
+{% for item in checkpoints_tomorrow -%}
+- {{ item }}
+{% endfor %}
+
+**이번 주 체크포인트**
+{% for item in checkpoints_week -%}
+- {{ item }}
+{% endfor %}
+
+## 5. 참고사항
+
+{{ notes }}
+
+> 본 자료는 정보 제공 목적으로 작성되었으며 특정 종목의 매매를 권유하는 것이 아닙니다. 시장 상황에 따라 실제 결과와 다를 수 있으며, 투자판단 및 그 결과에 대한 책임은 투자자 본인에게 있습니다.
+
+---
+작성자: {{ author }} ({{ branch_name }}) · 문의: {{ contact }}
