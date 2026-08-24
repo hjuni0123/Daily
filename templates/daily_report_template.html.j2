@@ -4,6 +4,17 @@
 <meta charset="UTF-8">
 <title>{{ date }} 데일리 마켓 브리핑</title>
 <style>
+  @font-face {
+    font-family: "KoPubDotum";
+    font-weight: 700;
+    src: url(data:font/woff2;base64,{{ font_bold }}) format("woff2");
+  }
+  @font-face {
+    font-family: "KoPubDotum";
+    font-weight: 500;
+    src: url(data:font/woff2;base64,{{ font_medium }}) format("woff2");
+  }
+
   @page { size: A4; margin: 14mm 14mm; }
   * { box-sizing: border-box; }
 
@@ -28,15 +39,17 @@
   }
 
   body {
-    font-family: "Malgun Gothic", "Apple SD Gothic Neo", "Noto Sans KR", sans-serif;
+    font-family: "KoPubDotum", "Malgun Gothic", "Apple SD Gothic Neo", "Noto Sans KR", sans-serif;
+    font-weight: 500;
     color: var(--ink);
     background: var(--paper);
     max-width: 780px;
     margin: 0 auto;
     padding: 0 0 24px 0;
-    line-height: 1.6;
+    line-height: 1.55;
     font-size: 13.5px;
   }
+  b, strong { font-weight: 700; }
 
   .masthead {
     background: var(--hy-tint);
@@ -51,7 +64,8 @@
 
   .doc-row { display: grid; grid-template-columns: 1fr 230px; column-gap: 22px; }
   .date-line { font-size: 13px; font-weight: 700; color: var(--ink); margin-bottom: 10px; }
-  h1 { margin: 0 0 6px 0; font-size: 23px; color: var(--ink); letter-spacing: -0.3px; }
+  .date-line .today-tag { color: var(--hy-mid); font-weight: 700; }
+  h1 { margin: 0 0 6px 0; font-size: 23px; font-weight: 700; color: var(--ink); letter-spacing: -0.3px; }
   .headline { font-size: 14px; font-weight: 700; color: var(--hy-deep); margin-bottom: 2px; }
 
   hr.full-rule { border: none; border-top: 2px solid var(--hy-deep); margin: 12px 0 16px 0; }
@@ -60,19 +74,20 @@
 
   .main-col h2 {
     font-size: 13.5px; color: var(--ink); font-weight: 700;
-    margin: 18px 0 8px 0;
+    margin: 18px 0 8px 0; padding-left: 9px; border-left: 3px solid var(--hy-mid);
   }
   .main-col section:first-child h2 { margin-top: 0; }
   .main-col p { margin: 0 0 6px 0; font-size: 13px; text-align: justify; }
 
-  .heatmap { display: flex; flex-wrap: wrap; gap: 3px; margin-bottom: 10px; }
+  .heatmap { position: relative; height: 210px; margin-bottom: 10px; }
   .heat-box {
-    flex: 1 1 auto; min-width: 64px; height: 56px; border-radius: 3px;
+    position: absolute;
     display: flex; flex-direction: column; align-items: center; justify-content: center;
-    padding: 2px 4px; text-align: center;
+    padding: 2px 4px; text-align: center; overflow: hidden;
+    outline: 1px solid var(--paper);
   }
-  .heat-box .hname { font-size: 10.5px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
-  .heat-box .hpct { font-size: 12px; font-weight: 700; font-variant-numeric: tabular-nums; }
+  .heat-box .hname { font-size: 10.5px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+  .heat-box .hpct { font-size: 11.5px; font-weight: 700; font-variant-numeric: tabular-nums; }
   .heat-up-3 { background: var(--heat-up-3); color: var(--heat-up-3-fg); }
   .heat-up-2 { background: var(--heat-up-2); color: var(--heat-up-2-fg); }
   .heat-up-1 { background: var(--heat-up-1); color: var(--heat-up-1-fg); }
@@ -80,6 +95,7 @@
   .heat-down-1 { background: var(--heat-down-1); color: var(--heat-down-1-fg); }
   .heat-down-2 { background: var(--heat-down-2); color: var(--heat-down-2-fg); }
   .heat-down-3 { background: var(--heat-down-3); color: var(--heat-down-3-fg); }
+  .heatmap-caption { font-size: 9.5px; color: #a29cb3; margin: -4px 0 8px 0; text-align: right; }
 
   .table-wrap { overflow-x: auto; }
   table { width: 100%; border-collapse: collapse; margin-bottom: 4px; font-size: 12px; }
@@ -92,7 +108,7 @@
   .down { color: var(--down); font-weight: 700; }
 
   .side-col { border-left: 1px solid var(--hy-tint-line); padding-left: 20px; }
-  .side-box { border: 1px solid var(--hy-tint-line); border-radius: 4px; overflow: hidden; margin-bottom: 14px; }
+  .side-box { border: 1px solid var(--hy-tint-line); overflow: hidden; margin-bottom: 14px; }
   .side-box-row {
     display: flex; justify-content: space-between; align-items: baseline;
     padding: 7px 10px; font-size: 12px; border-bottom: 1px solid var(--hy-tint-line);
@@ -102,12 +118,17 @@
   .side-box-row b { font-size: 12.5px; font-variant-numeric: tabular-nums; }
 
   .byline { font-size: 11.5px; color: var(--ink-soft); margin-bottom: 14px; line-height: 1.6; }
-  .byline .label { font-weight: 700; color: var(--hy-deep); }
+  .byline .label { font-weight: 700; color: var(--hy-deep); font-size: 12.5px; }
 
   .side-list-title { font-size: 12px; font-weight: 700; color: var(--ink); margin-bottom: 6px; }
-  .side-list-sub { font-size: 11px; font-weight: 700; color: var(--hy-mid); margin: 8px 0 3px 0; }
-  .side-col ul { margin: 0; padding-left: 15px; }
-  .side-col li { font-size: 11.5px; margin-bottom: 4px; }
+  .cp-row {
+    display: flex; gap: 8px; padding: 6px 2px; border-bottom: 1px solid var(--hy-tint-line);
+  }
+  .cp-row:last-child { border-bottom: none; }
+  .cp-date { flex: none; width: 58px; font-size: 10.5px; font-weight: 700; color: var(--hy-mid); }
+  .cp-event { font-size: 11.5px; }
+  .cp-nearest { background: var(--hy-tint); border-left: 3px solid var(--hy-deep); padding-left: 7px; margin-left: -10px; padding-right: 2px; }
+  .cp-nearest .cp-date { color: var(--hy-deep); }
 
   .compliance { margin-top: 22px; padding-top: 10px; border-top: 1px solid var(--hy-tint-line); }
   .compliance .heading { font-size: 11.5px; font-weight: 700; color: var(--ink); margin-bottom: 5px; }
@@ -121,11 +142,13 @@
     display: flex; justify-content: space-between; align-items: baseline;
     font-size: 11.5px; font-weight: 700; color: var(--ink); margin-bottom: 6px;
   }
-  .branch-directory .heading .url { font-weight: 400; color: var(--ink-soft); font-size: 10.5px; }
+  .branch-directory .heading .url { font-weight: 500; color: var(--ink-soft); font-size: 10.5px; }
   .branch-directory table { font-size: 10.5px; color: var(--ink-soft); }
   .branch-directory td { padding: 2px 8px 2px 0; text-align: left; border: none; }
   .branch-directory td:first-child { font-weight: 700; color: var(--ink); white-space: nowrap; }
   .branch-directory td:nth-child(2) { white-space: nowrap; }
+  .branch-directory tr.own td { color: var(--hy-deep); }
+  .branch-directory tr.own td:first-child::after { content: " ★"; color: var(--hy-mid); }
 
   .closing-logo { text-align: center; margin: 22px 0 10px 0; }
   .closing-logo img { height: 40px; }
@@ -143,7 +166,7 @@
 
   <div class="doc-row">
     <div>
-      <div class="date-line">{{ date }} ({{ weekday }})</div>
+      <div class="date-line">{{ date }} ({{ weekday }}) 장마감 · <span class="today-tag">당일 발행</span></div>
       <h1>데일리 마켓 브리핑</h1>
       <div class="headline">{{ headline }}</div>
     </div>
@@ -164,12 +187,13 @@
         <h2>업종 동향</h2>
         <div class="heatmap">
           {% for s in sectors -%}
-          <div class="heat-box {{ s.heat_class }}" style="flex-grow: {{ s.weight }};">
+          <div class="heat-box {{ s.heat_class }}" style="left:{{ s.x_pct }}%; top:{{ s.y_pct }}%; width:{{ s.w_pct }}%; height:{{ s.h_pct }}%;">
             <div class="hname">{{ s.name }}</div>
             <div class="hpct">{{ s.change_pct }}%</div>
           </div>
           {% endfor %}
         </div>
+        <div class="heatmap-caption">박스 크기 = 시가총액·거래대금 비중</div>
         <p>{{ sector_prose }}</p>
       </section>
 
@@ -201,26 +225,20 @@
       </div>
 
       <div class="byline">
-        <div class="label">{{ department }} {{ branch_name }}</div>
-        <div>작성: {{ author }}</div>
+        <div class="label">한양증권 {{ branch_name }}</div>
+        <div>{{ author }} {{ department }}</div>
         <div>문의: {{ contact }}</div>
-        <div>발행: {{ generated_at }}</div>
+        <div>발행: {{ generated_at }} (당일)</div>
       </div>
 
       <div class="side-list">
-        <div class="side-list-title">단기 체크포인트</div>
-        <div class="side-list-sub">내일(D+1)</div>
-        <ul>
-          {% for item in checkpoints_tomorrow -%}
-          <li>{{ item }}</li>
-          {% endfor %}
-        </ul>
-        <div class="side-list-sub">이번 주</div>
-        <ul>
-          {% for item in checkpoints_week -%}
-          <li>{{ item }}</li>
-          {% endfor %}
-        </ul>
+        <div class="side-list-title">단기 체크포인트 — 뭘, 언제</div>
+        {% for cp in checkpoints -%}
+        <div class="cp-row {{ 'cp-nearest' if cp.nearest else '' }}">
+          <div class="cp-date">{{ cp.date }}</div>
+          <div class="cp-event">{{ cp.event }}</div>
+        </div>
+        {% endfor %}
       </div>
     </div>
   </div>
@@ -228,9 +246,9 @@
   <div class="compliance">
     <div class="heading">Compliance Notice</div>
     <ul>
-      <li>본 자료는 {{ department }} {{ branch_name }}에서 고객의 투자판단에 참고가 되는 정보제공을 목적으로 작성한 자료이며, 특정 금융투자상품의 매매를 권유하기 위해 작성된 것이 아닙니다.</li>
+      <li>본 자료는 한양증권 {{ branch_name }}에서 고객의 투자판단에 참고가 되는 정보제공을 목적으로 작성한 자료이며, 특정 금융투자상품의 매매를 권유하기 위해 작성된 것이 아닙니다.</li>
       <li>본 자료는 기관투자자 또는 제3자에게 사전 제공된 사실이 없습니다.</li>
-      <li>본 자료에 게재된 내용은 외부의 부당한 압력이나 간섭 없이 작성되었음을 확인합니다.</li>
+      <li>본 자료에 게재된 내용은 외부의 부당한 압력이나 간섭 없이 작성되었음을 확인합니다. (작성: {{ author }} {{ department }})</li>
     </ul>
     <p>본 자료에 수록된 내용은 신뢰할 수 있는 자료 및 정보를 바탕으로 작성되었으나 당사가 그 정확성이나 완전성을 보장할 수 없으므로, 투자자는 자신의 판단과 책임하에 최종 투자 결정을 하시기 바랍니다. 따라서 본 자료는 어떠한 경우에도 고객의 증권투자 결과와 관련된 법적 책임소재의 증빙자료로 사용될 수 없습니다.</p>
   </div>
@@ -241,7 +259,7 @@
       <tr><td>본점</td><td>(02)3770-5000</td><td>서울 영등포구 국제금융로 6길 7 한양증권빌딩 2층</td></tr>
       <tr><td>송파RM센터</td><td>(02)419-2100</td><td>서울 송파구 가락로 183 한양APT상가 2층</td></tr>
       <tr><td>안산프리미어센터</td><td>(031)486-3311</td><td>경기 안산시 단원구 광덕대로 264 한양증권빌딩 1층</td></tr>
-      <tr><td>인천프리미어센터</td><td>(032)461-4433</td><td>인천 남동구 백범로 132 만수프라자빌딩 1층</td></tr>
+      <tr class="{{ 'own' if branch_name == '인천프리미어센터' else '' }}"><td>인천프리미어센터</td><td>(032)461-4433</td><td>인천 남동구 백범로 132 만수프라자빌딩 1층</td></tr>
     </table>
   </div>
 

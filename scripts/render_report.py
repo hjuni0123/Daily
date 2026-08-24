@@ -15,16 +15,28 @@ import json
 import sys
 from pathlib import Path
 
+import squarify
 from jinja2 import Environment, FileSystemLoader
 
 ROOT = Path(__file__).resolve().parent.parent
 TEMPLATE_DIR = ROOT / "templates"
 ASSET_DIR = TEMPLATE_DIR / "assets"
 
+TREEMAP_DX = 1000.0
+TREEMAP_DY = 280.0
+
+
+def asset_data_uri(filename: str, mime: str) -> str:
+    data = (ASSET_DIR / filename).read_bytes()
+    return f"data:{mime};base64,{base64.b64encode(data).decode()}"
+
 
 def logo_data_uri(filename: str) -> str:
-    data = (ASSET_DIR / filename).read_bytes()
-    return f"data:image/png;base64,{base64.b64encode(data).decode()}"
+    return asset_data_uri(filename, "image/png")
+
+
+def font_data_uri(filename: str) -> str:
+    return asset_data_uri(f"fonts/{filename}", "font/woff2")
 
 
 def _as_float(value):
@@ -89,6 +101,25 @@ def with_heat(sector: dict) -> dict:
     return sector
 
 
+def build_treemap(sectors: list) -> list:
+    """업종 시가총액/거래대금 비중(weight)에 비례한 실제 면적의 트리맵 좌표를 계산한다."""
+    if not sectors:
+        return []
+    ordered = sorted(sectors, key=lambda s: _as_float(s.get("weight")) or 0, reverse=True)
+    weights = [max(0.001, _as_float(s.get("weight")) or 1) for s in ordered]
+    normalized = squarify.normalize_sizes(weights, TREEMAP_DX, TREEMAP_DY)
+    rects = squarify.squarify(normalized, 0, 0, TREEMAP_DX, TREEMAP_DY)
+    out = []
+    for sector, rect in zip(ordered, rects):
+        sector = dict(sector)
+        sector["x_pct"] = round(rect["x"] / TREEMAP_DX * 100, 3)
+        sector["y_pct"] = round(rect["y"] / TREEMAP_DY * 100, 3)
+        sector["w_pct"] = round(rect["dx"] / TREEMAP_DX * 100, 3)
+        sector["h_pct"] = round(rect["dy"] / TREEMAP_DY * 100, 3)
+        out.append(sector)
+    return out
+
+
 def build_context(data: dict) -> dict:
     ctx = dict(data)
     for key in ("kospi", "kosdaq"):
@@ -98,22 +129,25 @@ def build_context(data: dict) -> dict:
         ctx["issue_stocks"] = [with_trend(s, "change_pct") for s in ctx["issue_stocks"]]
     if "sectors" in ctx:
         sectors = [with_heat(s) for s in ctx["sectors"]]
-        ctx["sectors"] = sorted(sectors, key=lambda s: _as_float(s.get("change_pct")) or 0, reverse=True)
-    ctx.setdefault("branch_name", "OO지점")
-    ctx.setdefault("department", "PB사업부")
-    ctx.setdefault("author", "")
-    ctx.setdefault("contact", "")
+        ctx["sectors"] = build_treemap(sectors)
+    ctx.setdefault("branch_name", "인천프리미어센터")
+    ctx.setdefault("department", "인턴")
+    ctx.setdefault("author", "김형준")
+    ctx.setdefault("contact", "010-5912-9992")
     ctx.setdefault("notes", "특이사항 없음")
     ctx.setdefault("headline", "")
     ctx.setdefault("market_summary_prose", "")
     ctx.setdefault("sector_prose", "")
     ctx.setdefault("sectors", [])
     ctx.setdefault("issue_stocks", [])
-    ctx.setdefault("checkpoints_tomorrow", [])
-    ctx.setdefault("checkpoints_week", [])
+    checkpoints = ctx.setdefault("checkpoints", [])
+    for i, cp in enumerate(checkpoints):
+        cp["nearest"] = (i == 0)
     ctx["logo_full_color"] = logo_data_uri("hy_logo_full_color.png")
     ctx["logo_full_white"] = logo_data_uri("hy_logo_full_white.png")
     ctx["logo_compact"] = logo_data_uri("hy_logo_compact_color.png")
+    ctx["font_bold"] = font_data_uri("KoPubWorld-Dotum-Bold.woff2")
+    ctx["font_medium"] = font_data_uri("KoPubWorld-Dotum-Medium.woff2")
     return ctx
 
 

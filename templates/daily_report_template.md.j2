@@ -3,8 +3,8 @@
 
 **{{ headline }}**
 
-**{{ date }} ({{ weekday }}) 장마감 기준**
-한양증권 {{ department }} {{ branch_name }} | 작성: {{ author }} | 발행 {{ generated_at }}
+**{{ date }} ({{ weekday }}) 장마감 · 당일 발행**
+한양증권 {{ branch_name }} | 작성: {{ author }} {{ department }} | 발행 {{ generated_at }}
 
 ---
 
@@ -38,23 +38,19 @@
 | {{ s.name }}({{ s.ticker }}) | {{ s.trend_symbol }} {{ s.change_pct }}% | {{ s.reason }} |
 {% endfor %}
 
-## 4. 단기 체크포인트
+## 4. 단기 체크포인트 — 뭘, 언제
 
-**내일(D+1) 체크포인트**
-{% for item in checkpoints_tomorrow -%}
-- {{ item }}
-{% endfor %}
-
-**이번 주 체크포인트**
-{% for item in checkpoints_week -%}
-- {{ item }}
+| 일정 | 체크포인트 |
+|---|---|
+{% for cp in checkpoints -%}
+| {{ cp.date }} | {{ cp.event }} |
 {% endfor %}
 
 ## 5. 참고사항
 
 {{ notes }}
 
-> 본 자료는 한양증권 {{ department }} {{ branch_name }}에서 고객의 투자판단에 참고가 되는 정보제공을 목적으로 작성한 자료이며, 특정 금융투자상품의 매매를 권유하기 위해 작성된 것이 아닙니다. 본 자료에 수록된 내용은 신뢰할 수 있는 자료 및 정보를 바탕으로 작성되었으나 당사가 그 정확성이나 완전성을 보장하지 않으며, 시장 상황에 따라 실제와 다를 수 있습니다. 본 자료는 어떠한 경우에도 고객의 투자 결과와 관련된 법적 책임소재의 증빙자료로 사용될 수 없으며, 투자판단 및 그 결과에 대한 책임은 투자자 본인에게 있습니다.
+> 본 자료는 한양증권 {{ branch_name }}에서 고객의 투자판단에 참고가 되는 정보제공을 목적으로 작성한 자료이며, 특정 금융투자상품의 매매를 권유하기 위해 작성된 것이 아닙니다. 본 자료에 수록된 내용은 신뢰할 수 있는 자료 및 정보를 바탕으로 작성되었으나 당사가 그 정확성이나 완전성을 보장하지 않으며, 시장 상황에 따라 실제와 다를 수 있습니다. 본 자료는 어떠한 경우에도 고객의 투자 결과와 관련된 법적 책임소재의 증빙자료로 사용될 수 없으며, 투자판단 및 그 결과에 대한 책임은 투자자 본인에게 있습니다. (작성: {{ author }} {{ department }})
 
 ---
-한양증권 {{ department }} {{ branch_name }} · 작성: {{ author }} · 문의: {{ contact }}
+한양증권 {{ branch_name }} · 작성: {{ author }} {{ department }} · 문의: {{ contact }}
