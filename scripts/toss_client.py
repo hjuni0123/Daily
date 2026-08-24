@@ -1,18 +1,20 @@
 #!/usr/bin/env python3
 """
-토스증권 Open API 클라이언트 (베스트에포트 초안 — 미검증).
+토스증권 Open API 클라이언트.
 
-주의:
-- 이 스크립트는 공개 검색 결과만으로 작성됐다. 이 환경(조직 방화벽)에서는
-  developers.tossinvest.com, openapi.tossinvest.com 모두 접속이 막혀 있어
-  1차 문서를 직접 열람하거나 실제 호출을 테스트하지 못했다. 엔드포인트 경로,
-  요청/응답 형식은 실제 문서 대비 다를 수 있다.
-- 공식/비공식 여부도 확인 못했다. 사용 전 https://developers.tossinvest.com
-  문서와 대조해서 검증할 것.
-- API 키/시크릿은 절대 코드나 커밋에 하드코딩하지 않는다. .env 파일(gitignore
-  대상)에 TOSS_API_KEY / TOSS_API_SECRET 로 저장하고 여기서는 환경변수로만 읽는다.
+공식 문서(WTS 설정 > Open API > 가이드, /llms.txt)로 검증 완료:
+- 토큰 발급은 HTTP Basic Auth가 아니라 client_id/client_secret을
+  application/x-www-form-urlencoded 바디 파라미터로 보낸다.
+- 시세 조회는 GET /api/v1/prices?symbols={code}.
+- 계좌·자산/주문/조건주문 카테고리는 X-Tossinvest-Account 헤더가 추가로 필요하다
+  (이 스크립트는 시세 조회만 다룬다 — 계좌 연동은 범위 밖).
+- 허용 IP 목록에 없는 IP에서 호출하면 403 (WTS 설정 > Open API > 허용 IP 관리
+  에서 등록).
 
-사용법 (검증 후):
+API 키/시크릿은 절대 코드나 커밋에 하드코딩하지 않는다. .env 파일(gitignore
+대상)에 TOSS_API_KEY / TOSS_API_SECRET 로 저장하고 여기서는 환경변수로만 읽는다.
+
+사용법:
     python3 scripts/toss_client.py --stock 005930
 """
 import argparse
@@ -24,8 +26,8 @@ from pathlib import Path
 import requests
 
 ROOT = Path(__file__).resolve().parent.parent
-TOKEN_URL = "https://openapi.tossinvest.com/oauth2/token"  # 확인 필요
-QUOTE_URL = "https://openapi.tossinvest.com/v1/market/price"  # 확인 필요
+TOKEN_URL = "https://openapi.tossinvest.com/oauth2/token"
+QUOTE_URL = "https://openapi.tossinvest.com/api/v1/prices"
 
 _token_cache = {"access_token": None, "expires_at": 0}
 
@@ -55,8 +57,12 @@ def get_access_token() -> str:
 
     resp = requests.post(
         TOKEN_URL,
-        auth=(client_id, client_secret),
-        data={"grant_type": "client_credentials"},
+        headers={"Content-Type": "application/x-www-form-urlencoded"},
+        data={
+            "grant_type": "client_credentials",
+            "client_id": client_id,
+            "client_secret": client_secret,
+        },
         timeout=10,
     )
     resp.raise_for_status()
@@ -71,7 +77,7 @@ def get_price(stock_code: str) -> dict:
     token = get_access_token()
     resp = requests.get(
         QUOTE_URL,
-        params={"stockCode": stock_code},
+        params={"symbols": stock_code},
         headers={"Authorization": f"Bearer {token}"},
         timeout=10,
     )
@@ -88,13 +94,17 @@ def main():
 
     try:
         data = get_price(args.stock)
-    except Exception as e:
-        print(f"실패: {e}", file=sys.stderr)
+    except requests.exceptions.HTTPError as e:
+        body = e.response.text if e.response is not None else ""
+        print(f"실패: {e}\n응답 본문: {body}", file=sys.stderr)
         print(
-            "이 환경에서 openapi.tossinvest.com 접속이 막혀 있을 수 있습니다. "
-            "로컬 PC/사내 서버에서 실행해보세요.",
+            "403이면 WTS 설정 > Open API > 허용 IP 관리에 현재 공인 IP가 "
+            "등록되어 있는지 확인하세요 (curl -s https://api.ipify.org).",
             file=sys.stderr,
         )
+        sys.exit(1)
+    except Exception as e:
+        print(f"실패: {e}", file=sys.stderr)
         sys.exit(1)
 
     print(data)
