@@ -63,6 +63,32 @@ def with_trend(d: dict, field: str = "change_pt") -> dict:
     return d
 
 
+def heat_class(change_pct) -> str:
+    v = _as_float(change_pct)
+    if v is None:
+        return "heat-flat"
+    if v >= 3:
+        return "heat-up-3"
+    if v >= 1.5:
+        return "heat-up-2"
+    if v > 0:
+        return "heat-up-1"
+    if v == 0:
+        return "heat-flat"
+    if v > -1.5:
+        return "heat-down-1"
+    if v > -3:
+        return "heat-down-2"
+    return "heat-down-3"
+
+
+def with_heat(sector: dict) -> dict:
+    sector = dict(sector)
+    sector["heat_class"] = heat_class(sector.get("change_pct"))
+    sector.setdefault("weight", 1)
+    return sector
+
+
 def build_context(data: dict) -> dict:
     ctx = dict(data)
     for key in ("kospi", "kosdaq"):
@@ -70,11 +96,18 @@ def build_context(data: dict) -> dict:
             ctx[key] = with_trend(ctx[key])
     if "issue_stocks" in ctx:
         ctx["issue_stocks"] = [with_trend(s, "change_pct") for s in ctx["issue_stocks"]]
+    if "sectors" in ctx:
+        sectors = [with_heat(s) for s in ctx["sectors"]]
+        ctx["sectors"] = sorted(sectors, key=lambda s: _as_float(s.get("change_pct")) or 0, reverse=True)
     ctx.setdefault("branch_name", "OO지점")
     ctx.setdefault("department", "PB사업부")
     ctx.setdefault("author", "")
     ctx.setdefault("contact", "")
     ctx.setdefault("notes", "특이사항 없음")
+    ctx.setdefault("headline", "")
+    ctx.setdefault("market_summary_prose", "")
+    ctx.setdefault("sector_prose", "")
+    ctx.setdefault("sectors", [])
     ctx.setdefault("issue_stocks", [])
     ctx.setdefault("checkpoints_tomorrow", [])
     ctx.setdefault("checkpoints_week", [])
