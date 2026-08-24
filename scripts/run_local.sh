@@ -1,12 +1,13 @@
 #!/usr/bin/env bash
 # 로컬 PC/사내 서버(크론)에서 장마감 직후 실행하는 파이프라인.
 #
-# 이 저장소가 만들어진 Claude Code Remote 샌드박스는 KRX 접속이 막혀 있어서
-# scripts/fetch_pykrx.py 를 실행할 수 없다 — 이 스크립트는 그 제약이 없는
-# 사용자의 PC/서버에서만 쓴다.
+# 이 저장소가 만들어진 Claude Code Remote 샌드박스는 KRX/토스 API 접속이 막혀
+# 있어서 fetch_pykrx.py/fetch_toss.py 를 실행할 수 없다 — 이 스크립트는 그
+# 제약이 없는 사용자의 PC/서버에서만 쓴다.
 #
-# 1) pykrx로 지수·등락률 상위종목·차트를 수집해 data/{날짜}.json에 뼈대를 만든다
-#    (몇 초 안에 끝난다 — 여기까지가 자동)
+# 1) .env에 TOSS_API_KEY가 있으면 fetch_toss.py(토스증권 Open API, 실시간
+#    시세)를, 없으면 fetch_pykrx.py(KRX)를 써서 지수·등락률 상위종목·차트를
+#    수집해 data/{날짜}.json에 뼈대를 만든다 (몇 초 안에 끝난다 — 여기까지가 자동)
 # 2) TODO로 남은 정성적 항목(제목/SIGNAL·KEY·STEP/이슈종목 이유/캘린더/지점 대응)을
 #    채우라고 알려주고 대기한다 (사람이 직접 채우는 구간 — 몇 분)
 # 3) Enter를 누르면 .md/.html/.docx 세 포맷을 렌더링한다
@@ -27,8 +28,13 @@ done
 
 DATA_JSON="data/${DATE}.json"
 
-echo "[1/3] pykrx로 지수/등락률/차트 수집 중..."
-python3 scripts/fetch_pykrx.py --date "$(echo "$DATE" | tr -d '-')" --out "$DATA_JSON"
+if [ -f .env ] && grep -q '^TOSS_API_KEY=.\+' .env; then
+  echo "[1/3] 토스증권 Open API로 지수/환율/수급/등락률/차트 수집 중..."
+  python3 scripts/fetch_toss.py --out "$DATA_JSON"
+else
+  echo "[1/3] pykrx로 지수/등락률/차트 수집 중... (.env에 TOSS_API_KEY 없음)"
+  python3 scripts/fetch_pykrx.py --date "$(echo "$DATE" | tr -d '-')" --out "$DATA_JSON"
+fi
 
 if [ "$AUTO" = false ]; then
   echo ""
