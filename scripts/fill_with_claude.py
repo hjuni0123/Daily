@@ -108,7 +108,7 @@ OUTPUT_SCHEMA = {
                 "properties": {
                     "datetime": {"type": "string", "description": "예: 8/27(목) 06:00"},
                     "event": {"type": "string"},
-                    "importance": {"type": "integer", "minimum": 1, "maximum": 3},
+                    "importance": {"type": "integer", "enum": [1, 2, 3]},
                     "checkpoint": {"type": "string", "description": "무엇을 확인해야 하는지"},
                 },
                 "required": ["datetime", "event", "importance", "checkpoint"],
