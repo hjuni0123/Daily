@@ -47,7 +47,7 @@
     margin: 0 auto;
     padding: 0 0 24px 0;
     line-height: 1.55;
-    font-size: 13.5px;
+    font-size: 14.5px;
   }
   b, strong { font-weight: 700; }
 
@@ -65,29 +65,29 @@
   .doc-row { display: grid; grid-template-columns: 1fr 230px; column-gap: 22px; }
   .date-line { font-size: 13px; font-weight: 700; color: var(--ink); margin-bottom: 10px; }
   .date-line .today-tag { color: var(--hy-mid); font-weight: 700; }
-  h1 { margin: 0 0 6px 0; font-size: 23px; font-weight: 700; color: var(--ink); letter-spacing: -0.3px; }
-  .headline { font-size: 14px; font-weight: 700; color: var(--hy-deep); margin-bottom: 2px; }
+  h1 { margin: 0 0 6px 0; font-size: 25px; font-weight: 700; color: var(--ink); letter-spacing: -0.3px; }
+  .headline { font-size: 15px; font-weight: 700; color: var(--hy-deep); margin-bottom: 2px; }
 
   hr.full-rule { border: none; border-top: 2px solid var(--hy-deep); margin: 12px 0 16px 0; }
 
   .body-grid { display: grid; grid-template-columns: 1fr 230px; column-gap: 22px; align-items: start; }
 
   .main-col h2 {
-    font-size: 13.5px; color: var(--ink); font-weight: 700;
+    font-size: 15px; color: var(--ink); font-weight: 700;
     margin: 18px 0 8px 0; padding-left: 9px; border-left: 3px solid var(--hy-mid);
   }
   .main-col section:first-child h2 { margin-top: 0; }
-  .main-col p { margin: 0 0 6px 0; font-size: 13px; text-align: justify; }
+  .main-col p { margin: 0 0 6px 0; font-size: 14px; text-align: justify; line-height: 1.7; }
 
-  .heatmap { position: relative; height: 210px; margin-bottom: 10px; }
+  .heatmap { position: relative; height: 260px; margin-bottom: 10px; }
   .heat-box {
     position: absolute;
     display: flex; flex-direction: column; align-items: center; justify-content: center;
     padding: 2px 4px; text-align: center; overflow: hidden;
     outline: 1px solid var(--paper);
   }
-  .heat-box .hname { font-size: 10.5px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
-  .heat-box .hpct { font-size: 11.5px; font-weight: 700; font-variant-numeric: tabular-nums; }
+  .heat-box .hname { font-size: 11.5px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+  .heat-box .hpct { font-size: 12.5px; font-weight: 700; font-variant-numeric: tabular-nums; }
   .heat-up-3 { background: var(--heat-up-3); color: var(--heat-up-3-fg); }
   .heat-up-2 { background: var(--heat-up-2); color: var(--heat-up-2-fg); }
   .heat-up-1 { background: var(--heat-up-1); color: var(--heat-up-1-fg); }
@@ -98,10 +98,10 @@
   .heatmap-caption { font-size: 9.5px; color: #a29cb3; margin: -4px 0 8px 0; text-align: right; }
 
   .table-wrap { overflow-x: auto; }
-  table { width: 100%; border-collapse: collapse; margin-bottom: 4px; font-size: 12px; }
+  table { width: 100%; border-collapse: collapse; margin-bottom: 4px; font-size: 13px; }
   table.ruled { border-top: 1.5px solid var(--hy-deep); border-bottom: 1.5px solid var(--hy-deep); }
   table.ruled th { border-bottom: 1px solid var(--hy-deep); }
-  th, td { padding: 5px 7px; text-align: right; font-variant-numeric: tabular-nums; }
+  th, td { padding: 7px 9px; text-align: right; font-variant-numeric: tabular-nums; }
   th { font-weight: 700; color: var(--ink); }
   td:first-child, th:first-child { text-align: left; }
   .up { color: var(--up); font-weight: 700; }
@@ -111,7 +111,7 @@
   .side-box { border: 1px solid var(--hy-tint-line); overflow: hidden; margin-bottom: 14px; }
   .side-box-row {
     display: flex; justify-content: space-between; align-items: baseline;
-    padding: 7px 10px; font-size: 12px; border-bottom: 1px solid var(--hy-tint-line);
+    padding: 8px 10px; font-size: 12.5px; border-bottom: 1px solid var(--hy-tint-line);
   }
   .side-box-row:last-child { border-bottom: none; }
   .side-box-row span { color: var(--ink-soft); }
@@ -122,37 +122,20 @@
 
   .side-list-title { font-size: 12px; font-weight: 700; color: var(--ink); margin-bottom: 6px; }
   .cp-row {
-    display: flex; gap: 8px; padding: 6px 2px; border-bottom: 1px solid var(--hy-tint-line);
+    display: flex; gap: 8px; padding: 8px 2px; border-bottom: 1px solid var(--hy-tint-line);
   }
   .cp-row:last-child { border-bottom: none; }
-  .cp-date { flex: none; width: 58px; font-size: 10.5px; font-weight: 700; color: var(--hy-mid); }
-  .cp-event { font-size: 11.5px; }
+  .cp-date { flex: none; width: 62px; font-size: 11px; font-weight: 700; color: var(--hy-mid); }
+  .cp-event { font-size: 12.5px; }
   .cp-nearest { background: var(--hy-tint); border-left: 3px solid var(--hy-deep); padding-left: 7px; margin-left: -10px; padding-right: 2px; }
   .cp-nearest .cp-date { color: var(--hy-deep); }
 
-  .compliance { margin-top: 22px; padding-top: 10px; border-top: 1px solid var(--hy-tint-line); }
-  .compliance .heading { font-size: 11.5px; font-weight: 700; color: var(--ink); margin-bottom: 5px; }
-  .compliance ul { margin: 0 0 6px 0; padding-left: 14px; }
-  .compliance li { font-size: 10.5px; color: var(--ink-soft); margin-bottom: 2px; list-style: none; position: relative; }
-  .compliance li::before { content: "•"; color: var(--hy-mid); position: absolute; left: -12px; }
-  .compliance p { font-size: 10px; color: #918da0; margin: 6px 0 0 0; line-height: 1.6; }
-
-  .branch-directory { margin-top: 16px; }
-  .branch-directory .heading {
-    display: flex; justify-content: space-between; align-items: baseline;
-    font-size: 11.5px; font-weight: 700; color: var(--ink); margin-bottom: 6px;
+  .footer {
+    margin-top: 18px; padding-top: 10px; border-top: 1px solid var(--hy-tint-line);
+    display: flex; align-items: center; justify-content: space-between;
   }
-  .branch-directory .heading .url { font-weight: 500; color: var(--ink-soft); font-size: 10.5px; }
-  .branch-directory table { font-size: 10.5px; color: var(--ink-soft); }
-  .branch-directory td { padding: 2px 8px 2px 0; text-align: left; border: none; }
-  .branch-directory td:first-child { font-weight: 700; color: var(--ink); white-space: nowrap; }
-  .branch-directory td:nth-child(2) { white-space: nowrap; }
-  .branch-directory tr.own td { color: var(--hy-deep); }
-  .branch-directory tr.own td:first-child::after { content: " ★"; color: var(--hy-mid); }
-
-  .closing-logo { text-align: center; margin: 22px 0 10px 0; }
-  .closing-logo img { height: 40px; }
-  .closing-legal { font-size: 9.5px; color: #a8a4b3; line-height: 1.7; margin: 0 0 20px 0; }
+  .footer img { height: 15px; opacity: 0.8; }
+  .footer .disclaimer { font-size: 9.5px; color: #a29cb3; }
 </style>
 </head>
 <body>
@@ -243,28 +226,10 @@
     </div>
   </div>
 
-  <div class="compliance">
-    <div class="heading">Compliance Notice</div>
-    <ul>
-      <li>본 자료는 한양증권 {{ branch_name }}에서 고객의 투자판단에 참고가 되는 정보제공을 목적으로 작성한 자료이며, 특정 금융투자상품의 매매를 권유하기 위해 작성된 것이 아닙니다.</li>
-      <li>본 자료는 기관투자자 또는 제3자에게 사전 제공된 사실이 없습니다.</li>
-      <li>본 자료에 게재된 내용은 외부의 부당한 압력이나 간섭 없이 작성되었음을 확인합니다. (작성: {{ author }} {{ department }})</li>
-    </ul>
-    <p>본 자료에 수록된 내용은 신뢰할 수 있는 자료 및 정보를 바탕으로 작성되었으나 당사가 그 정확성이나 완전성을 보장할 수 없으므로, 투자자는 자신의 판단과 책임하에 최종 투자 결정을 하시기 바랍니다. 따라서 본 자료는 어떠한 경우에도 고객의 증권투자 결과와 관련된 법적 책임소재의 증빙자료로 사용될 수 없습니다.</p>
+  <div class="footer">
+    <img src="{{ logo_compact }}" alt="한양증권">
+    <div class="disclaimer">본 자료는 정보 제공 목적으로 작성되었으며 투자 권유가 아닙니다.</div>
   </div>
-
-  <div class="branch-directory">
-    <div class="heading"><span>한양증권 점포현황</span><span class="url">www.hygood.co.kr</span></div>
-    <table>
-      <tr><td>본점</td><td>(02)3770-5000</td><td>서울 영등포구 국제금융로 6길 7 한양증권빌딩 2층</td></tr>
-      <tr><td>송파RM센터</td><td>(02)419-2100</td><td>서울 송파구 가락로 183 한양APT상가 2층</td></tr>
-      <tr><td>안산프리미어센터</td><td>(031)486-3311</td><td>경기 안산시 단원구 광덕대로 264 한양증권빌딩 1층</td></tr>
-      <tr class="{{ 'own' if branch_name == '인천프리미어센터' else '' }}"><td>인천프리미어센터</td><td>(032)461-4433</td><td>인천 남동구 백범로 132 만수프라자빌딩 1층</td></tr>
-    </table>
-  </div>
-
-  <div class="closing-logo"><img src="{{ logo_full_color }}" alt="한양증권 HANYANG SECURITIES"></div>
-  <p class="closing-legal">본 자료는 고객의 투자를 유도할 목적으로 작성된 것이 아니라 고객의 투자판단에 참고가 되는 정보제공을 목적으로 작성된 참고자료입니다. 본 자료는 분석담당자가 신뢰할 만하다고 판단하는 자료와 정보에 의거하여 만들어진 것이지만, 당사와 분석담당자가 그 정확성이나 완전성을 보장할 수는 없습니다. 따라서 본 자료를 참고한 고객의 투자의사결정은 전적으로 고객 자신의 판단과 책임하에 이루어져야 하며, 당사는 본 자료의 내용에 의거하여 행해진 일체의 투자행위 결과에 대하여 어떠한 책임도 지지 않습니다. 또한 본 자료는 당사 고객에게만 제공되는 자료로 당사의 동의 없이 무단으로 복제, 전송, 인용, 배포하는 행위는 법으로 금지하고 있습니다.</p>
 
 </div>
 
