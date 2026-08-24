@@ -20,25 +20,51 @@ ROOT = Path(__file__).resolve().parent.parent
 TEMPLATE_DIR = ROOT / "templates"
 
 
-def trend_class(change_pt) -> str:
+def _as_float(value):
     try:
-        v = float(str(change_pt).replace(",", "").replace("+", ""))
+        return float(str(value).replace(",", "").replace("+", ""))
     except (TypeError, ValueError):
+        return None
+
+
+def trend_class(change_pt) -> str:
+    v = _as_float(change_pt)
+    if v is None:
         return ""
     if v > 0:
         return "up"
     if v < 0:
         return "down"
-    return ""
+    return "flat"
+
+
+def trend_symbol(change_pt) -> str:
+    v = _as_float(change_pt)
+    if v is None:
+        return ""
+    if v > 0:
+        return "▲"
+    if v < 0:
+        return "▼"
+    return "-"
+
+
+def with_trend(d: dict, field: str = "change_pt") -> dict:
+    d = dict(d)
+    d["trend_class"] = trend_class(d.get(field))
+    d["trend_symbol"] = trend_symbol(d.get(field))
+    return d
 
 
 def build_context(data: dict) -> dict:
     ctx = dict(data)
     for key in ("kospi", "kosdaq"):
         if key in ctx and isinstance(ctx[key], dict):
-            ctx[key] = dict(ctx[key])
-            ctx[key]["trend_class"] = trend_class(ctx[key].get("change_pt"))
+            ctx[key] = with_trend(ctx[key])
+    if "issue_stocks" in ctx:
+        ctx["issue_stocks"] = [with_trend(s, "change_pct") for s in ctx["issue_stocks"]]
     ctx.setdefault("branch_name", "OO지점")
+    ctx.setdefault("department", "PB사업부")
     ctx.setdefault("author", "")
     ctx.setdefault("contact", "")
     ctx.setdefault("notes", "특이사항 없음")

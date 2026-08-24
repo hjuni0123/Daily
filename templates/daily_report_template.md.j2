@@ -1,7 +1,8 @@
-# 📈 데일리 마켓 브리핑
+**HANYANG SECURITIES** · Heritage & Young
+# 데일리 마켓 브리핑
 
 **{{ date }} ({{ weekday }}) 장마감 기준**
-{{ branch_name }} | 작성: {{ author }} | 발행 {{ generated_at }}
+한양증권 {{ department }} {{ branch_name }} | 작성: {{ author }} | 발행 {{ generated_at }}
 
 ---
 
@@ -9,8 +10,8 @@
 
 | 구분 | 종가 | 등락 | 등락률 | 거래대금 |
 |---|---:|---:|---:|---:|
-| KOSPI | {{ kospi.close }} | {{ kospi.change_pt }} | {{ kospi.change_pct }}% | {{ kospi.value }} |
-| KOSDAQ | {{ kosdaq.close }} | {{ kosdaq.change_pt }} | {{ kosdaq.change_pct }}% | {{ kosdaq.value }} |
+| KOSPI | {{ kospi.close }} | {{ kospi.trend_symbol }} {{ kospi.change_pt }} | {{ kospi.change_pct }}% | {{ kospi.value }} |
+| KOSDAQ | {{ kosdaq.close }} | {{ kosdaq.trend_symbol }} {{ kosdaq.change_pt }} | {{ kosdaq.change_pct }}% | {{ kosdaq.value }} |
 
 - **원/달러 환율**: {{ fx.rate }}원 ({{ fx.change }})
 - **전일 미국 증시**: 다우 {{ us.dow }} · S&P500 {{ us.sp500 }} · 나스닥 {{ us.nasdaq }}
@@ -26,7 +27,7 @@
 | 종목명(코드) | 등락률 | 이슈 및 이유 |
 |---|---:|---|
 {% for s in issue_stocks -%}
-| {{ s.name }}({{ s.ticker }}) | {{ s.change_pct }}% | {{ s.reason }} |
+| {{ s.name }}({{ s.ticker }}) | {{ s.trend_symbol }} {{ s.change_pct }}% | {{ s.reason }} |
 {% endfor %}
 
 ## 4. 단기 체크포인트
@@ -45,7 +46,7 @@
 
 {{ notes }}
 
-> 본 자료는 정보 제공 목적으로 작성되었으며 특정 종목의 매매를 권유하는 것이 아닙니다. 시장 상황에 따라 실제 결과와 다를 수 있으며, 투자판단 및 그 결과에 대한 책임은 투자자 본인에게 있습니다.
+> 본 자료는 한양증권 {{ department }} {{ branch_name }}에서 고객 정보 제공 목적으로 작성한 자료로, 특정 금융투자상품의 매매를 권유하기 위해 작성된 것이 아닙니다. 본 자료에 수록된 내용은 신뢰할 수 있는 자료 및 정보를 바탕으로 작성되었으나 당사가 그 정확성이나 완전성을 보장하지 않으며, 시장 상황에 따라 실제와 다를 수 있습니다. 투자판단 및 그 결과에 대한 책임은 투자자 본인에게 있습니다.
 
 ---
-작성자: {{ author }} ({{ branch_name }}) · 문의: {{ contact }}
+한양증권 {{ department }} {{ branch_name }} · 작성: {{ author }} · 문의: {{ contact }}

@@ -4,55 +4,124 @@
 <meta charset="UTF-8">
 <title>2026-08-21 데일리 마켓 브리핑</title>
 <style>
-  @page { size: A4; margin: 16mm 14mm; }
+  @page { size: A4; margin: 14mm 14mm; }
   * { box-sizing: border-box; }
+
+  :root {
+    --hy-deep: #2B1A52;      /* 딥퍼플 - CI 주조색 */
+    --hy-mid: #5A3AA8;
+    --hy-light: #8A63D6;
+    --hy-tint: #F3EFFB;      /* 옅은 퍼플 배경 */
+    --hy-tint-line: #DFD3F2;
+    --ink: #1B1626;
+    --ink-soft: #574F66;
+    --paper: #ffffff;
+    --up: #D6273C;           /* 상승 - 국내 관행상 적색 */
+    --down: #1D4ED8;         /* 하락 - 청색 */
+  }
+
   body {
     font-family: "Malgun Gothic", "Apple SD Gothic Neo", "Noto Sans KR", sans-serif;
-    color: #1a1a2e;
-    background: #ffffff;
+    color: var(--ink);
+    background: var(--paper);
     max-width: 780px;
     margin: 0 auto;
-    padding: 28px 24px;
+    padding: 0 0 28px 0;
     line-height: 1.55;
-    font-size: 14px;
+    font-size: 13.5px;
+  }
+
+  .masthead {
+    background: linear-gradient(135deg, var(--hy-deep) 0%, var(--hy-mid) 65%, var(--hy-light) 100%);
+    color: #fff;
+    padding: 16px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+  }
+  .masthead .brand { display: flex; align-items: center; gap: 10px; }
+  .hy-badge {
+    width: 40px; height: 40px; flex: none;
+    border-radius: 10px;
+    background: rgba(255,255,255,0.14);
+    border: 1px solid rgba(255,255,255,0.55);
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 800; font-size: 15px; letter-spacing: 0.5px;
+    color: #fff;
+  }
+  .brand-text .name { font-size: 16px; font-weight: 700; letter-spacing: 0.3px; }
+  .brand-text .tagline { font-size: 10.5px; opacity: 0.85; letter-spacing: 0.5px; text-transform: uppercase; }
+  .masthead .doc-label { text-align: right; font-size: 11.5px; opacity: 0.92; line-height: 1.5; }
+  .masthead .doc-label .title { font-size: 14px; font-weight: 700; }
+
+  .meta-bar {
+    padding: 10px 24px;
+    background: var(--hy-tint);
+    border-bottom: 2px solid var(--hy-deep);
+    font-size: 11.5px;
+    color: var(--ink-soft);
+    display: flex;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .content { padding: 0 24px; }
+
+  h2 {
+    font-size: 14px; color: var(--hy-deep); background: var(--hy-tint);
+    padding: 6px 10px; border-left: 4px solid var(--hy-deep); margin: 20px 0 10px 0;
+    letter-spacing: 0.2px;
   }
   .table-wrap { overflow-x: auto; }
-  .header { border-bottom: 3px solid #14213d; padding-bottom: 12px; margin-bottom: 18px; }
-  .header h1 { font-size: 22px; margin: 0 0 4px 0; color: #14213d; }
-  .header .meta { font-size: 12.5px; color: #555; }
-  h2 {
-    font-size: 15px; color: #14213d; background: #eef1f8;
-    padding: 5px 10px; border-left: 4px solid #14213d; margin: 20px 0 10px 0;
-  }
-  table { width: 100%; border-collapse: collapse; margin-bottom: 8px; font-size: 13px; }
-  th, td { border: 1px solid #d8dce6; padding: 6px 8px; text-align: right; }
-  th { background: #14213d; color: #fff; font-weight: 600; }
+  table { width: 100%; border-collapse: collapse; margin-bottom: 8px; font-size: 12.5px; }
+  th, td { border: 1px solid var(--hy-tint-line); padding: 6px 8px; text-align: right; font-variant-numeric: tabular-nums; }
+  th { background: var(--hy-deep); color: #fff; font-weight: 600; }
   td:first-child, th:first-child { text-align: left; }
-  .up { color: #d62828; font-weight: 600; }
-  .down { color: #1d4ed8; font-weight: 600; }
-  .summary-line { margin: 4px 0; font-size: 13.5px; }
-  .summary-line b { color: #14213d; }
+  .up { color: var(--up); font-weight: 700; }
+  .down { color: var(--down); font-weight: 700; }
+  .summary-line { margin: 4px 0; font-size: 13px; }
+  .summary-line b { color: var(--hy-deep); }
   ul { margin: 4px 0; padding-left: 20px; }
-  li { margin-bottom: 3px; font-size: 13.5px; }
+  li { margin-bottom: 3px; font-size: 13px; }
   .disclaimer {
-    margin-top: 16px; padding: 10px 12px; background: #f7f4ea;
-    border: 1px solid #e3dcc4; font-size: 11.5px; color: #6b6146; border-radius: 4px;
+    margin-top: 16px; padding: 10px 12px; background: var(--hy-tint);
+    border: 1px solid var(--hy-tint-line); font-size: 11px; color: var(--ink-soft); border-radius: 4px;
   }
-  .footer { margin-top: 14px; font-size: 11.5px; color: #888; text-align: right; }
+  .footer {
+    margin-top: 14px; padding-top: 8px; border-top: 1px solid var(--hy-tint-line);
+    font-size: 11px; color: #8a8394; text-align: right;
+  }
 </style>
 </head>
 <body>
 
-<div class="header">
-  <h1>📈 데일리 마켓 브리핑</h1>
-  <div class="meta">2026-08-21 (금) 장마감 기준 &nbsp;|&nbsp; OO지점 &nbsp;|&nbsp; 작성: 홍길동 &nbsp;|&nbsp; 발행 2026-08-21 16:05</div>
+<div class="masthead">
+  <div class="brand">
+    <div class="hy-badge">HY</div>
+    <div class="brand-text">
+      <div class="name">한양증권</div>
+      <div class="tagline">Hanyang Securities · Heritage &amp; Young</div>
+    </div>
+  </div>
+  <div class="doc-label">
+    <div class="title">Daily Market Brief</div>
+    <div>2026-08-21 (금) 장마감 기준</div>
+  </div>
 </div>
+<div class="meta-bar">
+  <span>PB사업부 · OO지점</span>
+  <span>작성: 홍길동 &nbsp;|&nbsp; 발행 2026-08-21 16:05</span>
+</div>
+
+<div class="content">
 
 <h2>1. 오늘의 마켓 요약</h2>
 <div class="table-wrap"><table>
   <tr><th>구분</th><th>종가</th><th>등락</th><th>등락률</th><th>거래대금</th></tr>
-  <tr><td>KOSPI</td><td>6,912.95</td><td class="up">+60.37</td><td class="up">+0.88%</td><td>18조 2,000억원</td></tr>
-  <tr><td>KOSDAQ</td><td>812.40</td><td class="down">-39.50</td><td class="down">-4.63%</td><td>9조 1,000억원</td></tr>
+  <tr><td>KOSPI</td><td>6,912.95</td><td class="up">▲ +60.37</td><td class="up">+0.88%</td><td>18조 2,000억원</td></tr>
+  <tr><td>KOSDAQ</td><td>812.40</td><td class="down">▼ -39.50</td><td class="down">-4.63%</td><td>9조 1,000억원</td></tr>
 </table></div>
 <div class="summary-line"><b>원/달러 환율</b> 1,352.10원 (+2.40)</div>
 <div class="summary-line"><b>전일 미국 증시</b> 다우 -0.6% · S&amp;P500 -0.9% · 나스닥 -1.3%</div>
@@ -65,10 +134,10 @@
 <h2>3. 오늘의 이슈 종목</h2>
 <div class="table-wrap"><table>
   <tr><th>종목명(코드)</th><th>등락률</th><th style="text-align:left">이슈 및 이유</th></tr>
-<tr><td>삼성전자(005930)</td><td>+2.10%</td><td style="text-align:left">AI 서버향 HBM 수주 기대감에 외국인 순매수 전환</td></tr>
-<tr><td>SK하이닉스(000660)</td><td>+3.40%</td><td style="text-align:left">메모리 반도체 업황 회복 기대 및 실적 전망 상향</td></tr>
-<tr><td>OO2차전지(000000)</td><td>-8.20%</td><td style="text-align:left">미국 관세 이슈 재부각 및 수주 취소 우려로 매물 출회</td></tr>
-<tr><td>OO바이오(000000)</td><td>-6.50%</td><td style="text-align:left">임상 지연 소식에 투자심리 위축</td></tr>
+<tr><td>삼성전자(005930)</td><td class="up">▲ +2.10%</td><td style="text-align:left">AI 서버향 HBM 수주 기대감에 외국인 순매수 전환</td></tr>
+<tr><td>SK하이닉스(000660)</td><td class="up">▲ +3.40%</td><td style="text-align:left">메모리 반도체 업황 회복 기대 및 실적 전망 상향</td></tr>
+<tr><td>OO2차전지(000000)</td><td class="down">▼ -8.20%</td><td style="text-align:left">미국 관세 이슈 재부각 및 수주 취소 우려로 매물 출회</td></tr>
+<tr><td>OO바이오(000000)</td><td class="down">▼ -6.50%</td><td style="text-align:left">임상 지연 소식에 투자심리 위축</td></tr>
 </table></div>
 
 <h2>4. 단기 체크포인트</h2>
@@ -88,10 +157,11 @@
 <div class="summary-line">특이사항 없음</div>
 
 <div class="disclaimer">
-본 자료는 정보 제공 목적으로 작성되었으며 특정 종목의 매매를 권유하는 것이 아닙니다. 시장 상황에 따라 실제 결과와 다를 수 있으며, 투자판단 및 그 결과에 대한 책임은 투자자 본인에게 있습니다.
+본 자료는 한양증권 PB사업부 OO지점에서 고객 정보 제공 목적으로 작성한 자료로, 특정 금융투자상품의 매매를 권유하기 위해 작성된 것이 아닙니다. 본 자료에 수록된 내용은 신뢰할 수 있는 자료 및 정보를 바탕으로 작성되었으나 당사가 그 정확성이나 완전성을 보장하지 않으며, 시장 상황에 따라 실제와 다를 수 있습니다. 투자판단 및 그 결과에 대한 책임은 투자자 본인에게 있습니다.
 </div>
 
-<div class="footer">작성자: 홍길동 (OO지점) · 문의: 010-0000-0000</div>
+<div class="footer">한양증권 PB사업부 OO지점 · 작성: 홍길동 · 문의: 010-0000-0000</div>
 
+</div>
 </body>
 </html>
