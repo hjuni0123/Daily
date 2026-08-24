@@ -23,7 +23,12 @@ TEMPLATE_DIR = ROOT / "templates"
 ASSET_DIR = TEMPLATE_DIR / "assets"
 
 TREEMAP_DX = 1000.0
-TREEMAP_DY = 280.0
+TREEMAP_DY = 300.0
+
+PERSISTENCE_CLASS = {
+    "높음": "pill-strong",
+    "중립": "pill-neutral",
+}
 
 
 def asset_data_uri(filename: str, mime: str) -> str:
@@ -41,13 +46,15 @@ def font_data_uri(filename: str) -> str:
 
 def _as_float(value):
     try:
-        return float(str(value).replace(",", "").replace("+", ""))
+        s = str(value).replace(",", "").replace("+", "").replace("bp", "").replace("%", "")
+        s = s.replace("−", "-")  # 유니코드 마이너스(−) -> ASCII 하이픈
+        return float(s)
     except (TypeError, ValueError):
         return None
 
 
-def trend_class(change_pt) -> str:
-    v = _as_float(change_pt)
+def trend_class(value) -> str:
+    v = _as_float(value)
     if v is None:
         return ""
     if v > 0:
@@ -57,8 +64,8 @@ def trend_class(change_pt) -> str:
     return "flat"
 
 
-def trend_symbol(change_pt) -> str:
-    v = _as_float(change_pt)
+def trend_symbol(value) -> str:
+    v = _as_float(value)
     if v is None:
         return ""
     if v > 0:
@@ -102,47 +109,84 @@ def with_heat(sector: dict) -> dict:
 
 
 def build_treemap(sectors: list) -> list:
-    """업종 시가총액/거래대금 비중(weight)에 비례한 실제 면적의 트리맵 좌표를 계산한다."""
+    """업종 시가총액 비중(weight)에 비례한 실제 면적의 트리맵 좌표를 계산한다."""
     if not sectors:
         return []
     ordered = sorted(sectors, key=lambda s: _as_float(s.get("weight")) or 0, reverse=True)
     weights = [max(0.001, _as_float(s.get("weight")) or 1) for s in ordered]
+    total = sum(weights)
     normalized = squarify.normalize_sizes(weights, TREEMAP_DX, TREEMAP_DY)
     rects = squarify.squarify(normalized, 0, 0, TREEMAP_DX, TREEMAP_DY)
     out = []
-    for sector, rect in zip(ordered, rects):
+    for sector, rect, w in zip(ordered, rects, weights):
         sector = dict(sector)
         sector["x_pct"] = round(rect["x"] / TREEMAP_DX * 100, 3)
         sector["y_pct"] = round(rect["y"] / TREEMAP_DY * 100, 3)
         sector["w_pct"] = round(rect["dx"] / TREEMAP_DX * 100, 3)
         sector["h_pct"] = round(rect["dy"] / TREEMAP_DY * 100, 3)
+        sector["weight_pct"] = round(w / total * 100, 1)
         out.append(sector)
     return out
 
 
+def with_persistence(stock: dict) -> dict:
+    stock = dict(stock)
+    stock["persistence_class"] = PERSISTENCE_CLASS.get(stock.get("persistence"), "pill-weak")
+    return stock
+
+
+def with_importance(item: dict) -> dict:
+    item = dict(item)
+    n = int(item.get("importance", 2) or 2)
+    item["stars"] = "★" * n + "☆" * (3 - n)
+    item["high"] = n >= 3
+    return item
+
+
 def build_context(data: dict) -> dict:
     ctx = dict(data)
-    for key in ("kospi", "kosdaq"):
-        if key in ctx and isinstance(ctx[key], dict):
-            ctx[key] = with_trend(ctx[key])
+
+    if "indicators" in ctx:
+        ctx["indicators"] = [with_trend(i, "change_pt") for i in ctx["indicators"]]
     if "issue_stocks" in ctx:
-        ctx["issue_stocks"] = [with_trend(s, "change_pct") for s in ctx["issue_stocks"]]
+        ctx["issue_stocks"] = [with_persistence(with_trend(s, "change_pct")) for s in ctx["issue_stocks"]]
     if "sectors" in ctx:
-        sectors = [with_heat(s) for s in ctx["sectors"]]
-        ctx["sectors"] = build_treemap(sectors)
-    ctx.setdefault("branch_name", "인천프리미어센터")
+        ctx["sectors"] = build_treemap([with_heat(s) for s in ctx["sectors"]])
+    if "calendar" in ctx:
+        ctx["calendar"] = [with_importance(c) for c in ctx["calendar"]]
+
+    ctx.setdefault("branch_name", "인천프리미어지점")
+    # 참고: 한양증권 공식 점포 안내상 명칭은 "인천프리미어센터"이나, 사용자 제공
+    # 레퍼런스 문서에서 일관되게 "인천프리미어지점"으로 표기되어 있어 이를 따랐다.
     ctx.setdefault("department", "인턴")
     ctx.setdefault("author", "김형준")
     ctx.setdefault("contact", "010-5912-9992")
-    ctx.setdefault("notes", "특이사항 없음")
-    ctx.setdefault("headline", "")
-    ctx.setdefault("market_summary_prose", "")
-    ctx.setdefault("sector_prose", "")
+    ctx.setdefault("eyebrow", "시장 마감 브리프")
+    ctx.setdefault("title", "")
+    ctx.setdefault("subtitle", "")
+    ctx.setdefault("signal", "")
+    ctx.setdefault("key_point", "")
+    ctx.setdefault("step", "")
+    ctx.setdefault("indicators", [])
+    flows = ctx.setdefault("flows", {})
+    flows.setdefault("kospi", {"foreign": "-", "inst": "-", "retail": "-"})
+    flows.setdefault("kosdaq", {"foreign": "-", "inst": "-", "retail": "-"})
+    flows.setdefault("futures", "-")
+    breadth = ctx.setdefault("breadth", {})
+    breadth.setdefault("advance_decline", "-")
+    breadth.setdefault("note", "")
+    breadth.setdefault("trading_value", "-")
+    breadth.setdefault("margin_balance", "-")
     ctx.setdefault("sectors", [])
+    ctx.setdefault("sector_prose", "")
     ctx.setdefault("issue_stocks", [])
-    checkpoints = ctx.setdefault("checkpoints", [])
-    for i, cp in enumerate(checkpoints):
-        cp["nearest"] = (i == 0)
+    ctx.setdefault("calendar", [])
+    stance = ctx.setdefault("stance", {})
+    stance.setdefault("maintain", "")
+    stance.setdefault("reduce", "")
+    stance.setdefault("cash", "")
+    ctx.setdefault("notes", "특이사항 없음")
+
     ctx["logo_full_color"] = logo_data_uri("hy_logo_full_color.png")
     ctx["logo_full_white"] = logo_data_uri("hy_logo_full_white.png")
     ctx["logo_compact"] = logo_data_uri("hy_logo_compact_color.png")
