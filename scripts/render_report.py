@@ -192,6 +192,14 @@ def build_context(data: dict) -> dict:
     stance.setdefault("cash", "")
     ctx.setdefault("notes", "특이사항 없음")
 
+    ctx["chart_png"] = None
+    chart_path = ctx.pop("chart_png_path", None)
+    if chart_path and Path(chart_path).exists():
+        data_bytes = Path(chart_path).read_bytes()
+        ctx["chart_png"] = f"data:image/png;base64,{base64.b64encode(data_bytes).decode()}"
+    elif ctx.get("chart_png_b64"):
+        ctx["chart_png"] = f"data:image/png;base64,{ctx.pop('chart_png_b64')}"
+
     ctx["logo_full_color"] = logo_data_uri("hy_logo_full_color.png")
     ctx["logo_full_white"] = logo_data_uri("hy_logo_full_white.png")
     ctx["logo_compact"] = logo_data_uri("hy_logo_compact_color.png")

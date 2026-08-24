@@ -81,6 +81,16 @@
 8. **데이터 JSON 작성.** `data/{YYYY-MM-DD}.json`에 정리 (`data/` 없으면 생성).
    `reports/sample/2026-08-24_sample.json`을 스키마 예시로 참고.
 
+8-1. **(선택) 차트 생성.** 2번에서 조사한 최근 며칠치 KOSPI/KOSDAQ 종가가 있으면
+   (뉴스에 "최근 5거래일 코스피 추이" 같은 표/문장이 나오는 경우가 많다) 차트를
+   만들어 넣는다. 못 찾았으면 생략해도 된다(리포트에서 그 부분만 빠질 뿐 깨지지 않음).
+   ```
+   python3 scripts/build_chart.py --out reports/{YYYY-MM-DD}_chart.png \
+     --kospi "08/18,6820.10;08/19,6830.50;...;{오늘},{종가}" \
+     --kosdaq "08/18,845.20;...;{오늘},{종가}"
+   ```
+   생성됐으면 데이터 JSON에 `"chart_png_path": "reports/{YYYY-MM-DD}_chart.png"`를 추가한다.
+
 9. **렌더링 실행 (3개 포맷 모두).**
    ```
    python3 scripts/render_report.py data/{YYYY-MM-DD}.json
@@ -99,21 +109,37 @@
 12. **저장소에 커밋.** `data/{YYYY-MM-DD}.json`과 `reports/{YYYY-MM-DD}_market_report.md/.html/.docx`를
     커밋하고 지정된 브랜치에 푸시.
 
-## 참고: 로컬 PC/사내 서버에서 완전 자동화하려면
+## 참고: 로컬 PC/사내 서버에서 "진짜 시세 API + 차트"로 완전 자동화하려면
 
-이 원격 세션 환경은 조직 보안 정책상 KRX/증권사 API 서버에 직접 접근이 막혀 있다
-(`data.krx.co.kr`, `openapi.tossinvest.com` 모두 확인됨). 방화벽 제약이 없는 자체
-서버/PC에서 크론으로 돌린다면:
+이 원격 세션 환경(이 문서를 따르는 Claude Code Remote Routine이 도는 곳)은 조직
+보안 정책상 KRX/증권사 API 서버에 직접 접근이 막혀 있다 (`data.krx.co.kr`,
+`openapi.tossinvest.com` 모두 확인됨 — curl로 직접 테스트해도 403). **그래서 이
+문서의 기본 경로는 WebSearch로 뉴스를 읽어 데이터를 채우는 방식이고, 정밀한
+실시간 시세나 실제 가격 차트는 이 환경에서는 만들 수 없다.** 정확한 API 시세와
+차트가 꼭 필요하면 방화벽 제약이 없는 사용자의 로컬 PC나 자체 서버에서 도는
+별도 파이프라인이 필요하다 (이건 이 Routine이 아니라 사람이 그 PC/서버에
+크론으로 설정해야 한다):
 
-- `scripts/fetch_pykrx.py`로 코스피/코스닥 지수와 등락률 상위 종목을 자동 수집할 수 있다.
+- **`scripts/run_local.sh`** — 로컬에서 장마감 직후 실행하는 원스톱 스크립트.
+  `scripts/fetch_pykrx.py`로 지수·등락률 상위종목·최근 10거래일 차트(PNG)까지
+  몇 초 안에 자동 수집한 뒤, 제목/SIGNAL·KEY·STEP/이슈종목 이유/캘린더/지점
+  대응처럼 **판단이 필요한 항목만** TODO로 표시해서 사람이 채우게 하고, 그 다음
+  `.md`/`.html`/`.docx`를 렌더링한다. `--auto`로 실행하면 TODO를 그대로 둔 채
+  바로 렌더링한다(사람 개입 없이 크론으로 돌릴 때).
+- 이렇게 하면 **가격·차트는 pykrx 실시간 데이터로 몇 초 안에 정확하게**, "왜
+  움직였는지" 같은 판단은 사람이 자기가 이미 아는 내용으로 빠르게(보통 뉴스
+  검색보다 훨씬 빠름) 채우는 구조라 15:30~15:40 목표를 실제로 맞출 수 있다.
 - `scripts/toss_client.py`(`.env`에 `TOSS_API_KEY`/`TOSS_API_SECRET` 필요, 사용 전
-  https://developers.tossinvest.com 문서와 엔드포인트 대조 검증 필수)로 토스증권 시세를
-  가져올 수 있다.
-- 두 경우 모두 정성적 판단 항목(`issue_stocks`의 reason/persistence/checkpoint, `calendar`,
-  `stance`)은 여전히 Claude(WebSearch, 1번 소싱 원칙 준수)나 사람이 채워야 한다.
+  https://developers.tossinvest.com 문서와 엔드포인트 대조 검증 필수 — 아직
+  미검증)로 pykrx 대신 토스증권 시세를 가져오는 것도 가능하다.
+- 판단이 필요한 항목까지 사람 개입 없이 완전 자동화하려면, 이 로컬 스크립트가
+  만든 정확한 숫자 JSON을 Claude API(WebSearch 툴 포함)에 넘겨 이유·캘린더·
+  지점 대응까지 채우게 하는 구조를 추가로 만들면 된다 — 지금은 구현돼 있지
+  않다.
 
-크론 예시 (평일 15:30 KST 장마감 직후 실행):
+크론 예시 (평일 15:30 KST 장마감 직후, 사람이 나중에 확인):
 ```
-30 15 * * 1-5 cd /path/to/Daily && python3 scripts/render_report.py data/$(date +\%F).json && \
-  (cd scripts/docx && npm install) && node scripts/docx/render_docx.js data/$(date +\%F).json reports/$(date +\%F)_market_report.docx
+30 15 * * 1-5 /path/to/Daily/scripts/run_local.sh >> /path/to/Daily/logs/run.log 2>&1
 ```
+(터미널이 없는 크론에서 바로 완성까지 원하면 `run_local.sh --auto` — 단, 이 경우
+이유/캘린더/지점 대응 등은 TODO로 남는다.)

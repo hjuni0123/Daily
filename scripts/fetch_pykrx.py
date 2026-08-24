@@ -1,17 +1,22 @@
 #!/usr/bin/env python3
 """
 pykrx로 코스피/코스닥 시황 및 등락률 상위 종목을 가져와
-render_report.py가 쓸 데이터 JSON의 '뼈대'를 만든다.
+render_report.py가 쓸 데이터 JSON의 '뼈대'를 만든다. 차트 PNG도 같이 만든다.
 
-주의: KRX 데이터 서버(data.krx.co.kr) 접근이 막혀 있는 네트워크(예: 일부
-샌드박스/사내망)에서는 실패한다. 그런 환경에서는 이 스크립트 대신
-docs/AUTOMATION_GUIDE.md 의 절차대로 웹 검색 등으로 데이터를 조사해
-JSON을 직접 채워 넣으면 된다.
+**이 스크립트는 KRX 데이터 서버(data.krx.co.kr) 접근이 필요하다.** 이 저장소가
+개발된 Claude Code Remote 샌드박스에서는 접속이 막혀 있어 실행할 수 없다 — 방화벽
+제약이 없는 사용자의 로컬 PC/사내 서버에서만 쓸 수 있다 (그래서 이 스크립트는 그
+환경에서 실행되는지 검증하지 못했다. 처음 돌려볼 때 pykrx 쪽 컬럼명 등에서 한 번
+정도 디버깅이 필요할 수 있다).
+
+가져올 수 있는 것: 코스피/코스닥 지수, 등락률 상위/하위 종목, 최근 거래일 추이 차트.
+가져올 수 없는 것(정성적 판단 필요): 이슈 종목이 "왜" 움직였는지, 지속성 판단,
+캘린더, 지점 대응 요약, SIGNAL/KEY/STEP — 이 스크립트가 만든 JSON에는 TODO로
+남아있으니 직접 채우거나 scripts/local_pipeline.py --with-claude 흐름을 참고할 것.
 
 사용법:
-    python3 scripts/fetch_pykrx.py                 # 최근 영업일 기준
-    python3 scripts/fetch_pykrx.py --date 20260821
-    python3 scripts/fetch_pykrx.py --out data/2026-08-21.json
+    python3 scripts/fetch_pykrx.py --out data/2026-08-24.json
+    python3 scripts/fetch_pykrx.py --date 20260824 --out data/2026-08-24.json
 """
 import argparse
 import datetime
@@ -26,6 +31,8 @@ except ImportError:
     sys.exit(1)
 
 ROOT = Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import build_chart  # noqa: E402
 
 
 def find_last_trading_day(base: datetime.date) -> str:
@@ -38,7 +45,7 @@ def find_last_trading_day(base: datetime.date) -> str:
     raise RuntimeError("최근 10일 내 영업일을 찾지 못했습니다.")
 
 
-def index_summary(ds: str, ticker: str) -> dict:
+def index_indicator(ds: str, ticker: str, label: str, note: str) -> dict:
     d = datetime.datetime.strptime(ds, "%Y%m%d").date()
     start = (d - datetime.timedelta(days=14)).strftime("%Y%m%d")
     df = stock.get_index_ohlcv_by_date(start, ds, ticker)
@@ -49,70 +56,121 @@ def index_summary(ds: str, ticker: str) -> dict:
     change_pt = close - prev_close
     change_pct = change_pt / prev_close * 100
     return {
+        "label": label,
         "close": f"{close:,.2f}",
         "change_pt": f"{change_pt:+,.2f}",
-        "change_pct": f"{change_pct:+.2f}",
-        "value": f"{today_row['거래대금'] / 1e8:,.0f}억원",
+        "change_pct": f"{change_pct:+.2f}%",
+        "note": note,
     }
 
 
-def top_movers(ds: str, market: str, n: int = 5) -> dict:
-    df = stock.get_market_price_change(ds, ds, market=market)
-    df = df[df["시가총액"] > 3000 * 1e8] if "시가총액" in df.columns else df
-    gainers = df.sort_values("등락률", ascending=False).head(n)
-    losers = df.sort_values("등락률", ascending=True).head(n)
-    stocks = []
-    for ticker, row in gainers.iterrows():
-        stocks.append({
-            "name": row.get("종목명", ticker), "ticker": ticker,
-            "change_pct": f"{row['등락률']:+.2f}", "reason": "TODO: 뉴스 조사 후 채우기",
+def sector_snapshot(ds: str) -> list:
+    """KRX 업종지수로 업종별 등락률 + 상장시가총액 비중을 시도해본다.
+    (KOSPI 200 산업분류 등 색인 체계가 pykrx 버전에 따라 다를 수 있어 실패하면
+    빈 리스트를 반환한다 — 이 경우 sectors는 직접 채워야 한다.)
+    """
+    sectors = []
+    try:
+        tickers = stock.get_index_ticker_list(ds, market="KOSPI")
+        for t in tickers:
+            name = stock.get_index_ticker_name(t)
+            df = stock.get_index_ohlcv_by_date(ds, ds, t)
+            if df.empty:
+                continue
+            row = df.iloc[0]
+            change_pct = row.get("등락률")
+            cap = row.get("상장시가총액", row.get("거래대금"))
+            if change_pct is None or cap is None:
+                continue
+            sectors.append({"name": name, "change_pct": f"{change_pct:+.2f}", "weight": float(cap)})
+    except Exception as e:  # pykrx 업종 API는 버전/환경별로 편차가 커서 실패를 허용한다
+        print(f"경고: 업종 데이터 조회 실패({e}) — sectors는 빈 채로 둡니다.", file=sys.stderr)
+    return sectors
+
+
+def top_movers(ds: str, n: int = 4) -> list:
+    df = stock.get_market_price_change(ds, ds, market="ALL")
+    if "시가총액" in df.columns:
+        df = df[df["시가총액"] > 3000 * 1e8]
+    gainers = df.sort_values("등락률", ascending=False).head(n // 2 + n % 2)
+    losers = df.sort_values("등락률", ascending=True).head(n // 2)
+    out = []
+    for ticker, row in list(gainers.iterrows()) + list(losers.iterrows()):
+        out.append({
+            "name": row.get("종목명", ticker),
+            "ticker": ticker,
+            "change_pct": f"{row['등락률']:+.2f}",
+            "reason": "TODO: 왜 움직였는지 직접 채우기 (뉴스/사내 정보 기준)",
+            "persistence": "중립",
+            "checkpoint": "TODO",
         })
-    for ticker, row in losers.iterrows():
-        stocks.append({
-            "name": row.get("종목명", ticker), "ticker": ticker,
-            "change_pct": f"{row['등락률']:+.2f}", "reason": "TODO: 뉴스 조사 후 채우기",
-        })
-    return stocks
+    return out
 
 
 def main():
-    parser = argparse.ArgumentParser(description=__doc__)
+    parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--date", help="YYYYMMDD, 미지정시 최근 영업일")
-    parser.add_argument("--out", help="출력 JSON 경로, 미지정시 stdout")
+    parser.add_argument("--out", required=True, help="출력 JSON 경로")
+    parser.add_argument("--chart-out", help="차트 PNG 경로 (미지정시 JSON과 같은 위치)")
     args = parser.parse_args()
 
     ds = args.date or find_last_trading_day(datetime.date.today())
     iso_date = f"{ds[:4]}-{ds[4:6]}-{ds[6:]}"
     weekday = "월화수목금토일"[datetime.date(int(ds[:4]), int(ds[4:6]), int(ds[6:])).weekday()]
 
+    kospi = index_indicator(ds, "1001", "KOSPI", "TODO: 왜 이렇게 움직였는지 한 줄")
+    kosdaq = index_indicator(ds, "2001", "KOSDAQ", "TODO: 왜 이렇게 움직였는지 한 줄")
+
+    out_path = Path(args.out)
+    chart_path = Path(args.chart_out) if args.chart_out else out_path.with_suffix(".chart.png")
+    try:
+        labels, kospi_vals, kosdaq_vals = build_chart.fetch_from_pykrx(ds, days=10)
+        build_chart.build(labels, kospi_vals, kosdaq_vals, "최근 10거래일 종가 추이", chart_path)
+        chart_png_path = str(chart_path)
+    except Exception as e:
+        print(f"경고: 차트 생성 실패({e})", file=sys.stderr)
+        chart_png_path = None
+
     data = {
+        "_note": "fetch_pykrx.py로 자동 수집. TODO 표시된 정성적 필드(이유/지속성/캘린더/"
+                 "SIGNAL·KEY·STEP/지점 대응)는 직접 채우거나 Claude에게 뉴스 조사를 시켜서 채울 것.",
         "date": iso_date,
         "weekday": weekday,
-        "branch_name": "OO지점",
-        "author": "",
-        "contact": "",
-        "generated_at": datetime.datetime.now().strftime("%Y-%m-%d %H:%M"),
-        "kospi": index_summary(ds, "1001"),
-        "kosdaq": index_summary(ds, "2001"),
-        "fx": {"rate": "TODO", "change": "TODO"},
-        "us": {"dow": "TODO", "sp500": "TODO", "nasdaq": "TODO"},
-        "market_comment": "TODO",
-        "sector_top": "TODO",
-        "sector_bottom": "TODO",
-        "issue_stocks": top_movers(ds, "ALL"),
-        "checkpoints_tomorrow": ["TODO"],
-        "checkpoints_week": ["TODO"],
+        "branch_name": "인천프리미어지점",
+        "department": "인턴",
+        "author": "김형준",
+        "contact": "010-5912-9992",
+        "generated_at": datetime.datetime.now().strftime("%H:%M"),
+        "eyebrow": "시장 마감 브리프",
+        "title": "TODO: 오늘 시장을 관통하는 한 문장",
+        "subtitle": "TODO",
+        "signal": "TODO",
+        "key_point": "TODO",
+        "step": "TODO",
+        "indicators": [
+            kospi, kosdaq,
+            {"label": "원/달러", "close": "-", "change_pt": "-", "change_pct": "-", "note": "TODO (pykrx로는 못 가져옴)"},
+            {"label": "미 10년물", "close": "-", "change_pt": "-", "change_pct": "-", "note": "TODO (pykrx로는 못 가져옴)"},
+            {"label": "S&P500 선물 / WTI", "close": "-", "change_pt": "", "change_pct": "-", "note": "TODO (pykrx로는 못 가져옴)"},
+        ],
+        "flows": {"kospi": {"foreign": "-", "inst": "-", "retail": "-"}, "kosdaq": {"foreign": "-", "inst": "-", "retail": "-"}, "futures": "-"},
+        "breadth": {"advance_decline": "-", "note": "", "trading_value": "-", "margin_balance": "-"},
+        "sectors": sector_snapshot(ds),
+        "sector_prose": "TODO",
+        "issue_stocks": top_movers(ds),
+        "calendar": [],
+        "stance": {"maintain": "TODO", "reduce": "TODO", "cash": "TODO"},
         "notes": "특이사항 없음",
     }
+    if chart_png_path:
+        data["chart_png_path"] = chart_png_path
 
-    out_str = json.dumps(data, ensure_ascii=False, indent=2)
-    if args.out:
-        out_path = Path(args.out)
-        out_path.parent.mkdir(parents=True, exist_ok=True)
-        out_path.write_text(out_str, encoding="utf-8")
-        print(f"저장 완료: {out_path}")
-    else:
-        print(out_str)
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+    out_path.write_text(json.dumps(data, ensure_ascii=False, indent=2), encoding="utf-8")
+    print(f"저장 완료: {out_path}")
+    print("TODO로 남은 정성적 필드(제목/SIGNAL·KEY·STEP/이슈종목 이유/캘린더/지점 대응)를 채운 뒤")
+    print(f"  python3 scripts/render_report.py {out_path}")
+    print("을 실행하세요.")
 
 
 if __name__ == "__main__":

@@ -250,6 +250,23 @@ function infoBox(title, lines, width) {
   });
 }
 
+function pngDimensions(buf) {
+  // PNG 헤더의 IHDR 청크에서 폭/높이를 읽는다 (오프셋 16, 24: 각 4바이트 빅엔디언).
+  return { width: buf.readUInt32BE(16), height: buf.readUInt32BE(20) };
+}
+
+function buildChartImage(chartPath) {
+  if (!chartPath || !fs.existsSync(chartPath)) return null;
+  const buf = fs.readFileSync(chartPath);
+  const { width, height } = pngDimensions(buf);
+  const targetWidthPx = Math.round((PAGE_W / 1440) * 96); // dxa -> 96dpi 픽셀, 본문 전체 폭
+  const targetHeightPx = Math.round((height / width) * targetWidthPx);
+  return p([new ImageRun({ data: buf, transformation: { width: targetWidthPx, height: targetHeightPx }, type: "png" })], {
+    alignment: AlignmentType.CENTER,
+    spacing: { before: 120, after: 60 },
+  });
+}
+
 function buildFlowsBreadth(flows, breadth) {
   const half = Math.round(PAGE_W * 0.49);
   const flowLines = [
@@ -443,6 +460,7 @@ function main() {
     buildIndicatorsTable(data.indicators || []),
     p([run("")]),
     buildFlowsBreadth(data.flows || {}, data.breadth || {}),
+    buildChartImage(data.chart_png_path) || p([run("")]),
 
     sectionHeading("Ⅱ. 업종 동향 맵", "박스 크기 = 시가총액 비중, 색 = 당일 등락률"),
     buildSectorMap(sectors),

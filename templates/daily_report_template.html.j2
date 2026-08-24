@@ -117,6 +117,9 @@
   .info-box .ibbody { padding: 6px 10px; font-size: 11px; line-height: 1.6; }
   .info-box .ibbody .up, .info-box .ibbody .down { font-weight: 700; }
 
+  .chart-wrap { margin-top: 8px; text-align: center; }
+  .chart-wrap img { max-width: 100%; height: auto; display: inline-block; }
+
   .heatmap { position: relative; height: 195px; margin-top: 5px; }
   .heat-box {
     position: absolute;
@@ -233,6 +236,10 @@
       </div>
     </div>
   </div>
+
+  {% if chart_png %}
+  <div class="chart-wrap"><img src="{{ chart_png }}" alt="지수 추이 차트"></div>
+  {% endif %}
 
   <h2>Ⅱ. 업종 동향 맵 <span class="h2-note">박스 크기 = 시가총액 비중, 색 = 당일 등락률</span></h2>
   <div class="heatmap">

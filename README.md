@@ -12,11 +12,13 @@ templates/
   assets/                        # 한양증권 CI 로고 + 실제 사용 서체(KoPub World Dotum)
 scripts/
   render_report.py    # 데이터 JSON -> 양식에 채워 .md/.html 생성
-  fetch_pykrx.py       # (선택) pykrx로 코스피/코스닥 지수·등락률 상위종목 자동 수집
+  build_chart.py       # pykrx 또는 직접 지정한 수치로 지수 추이 차트(PNG) 생성
+  fetch_pykrx.py       # pykrx로 코스피/코스닥 지수·등락률 상위종목+차트 자동 수집 (로컬 전용)
+  run_local.sh          # 로컬 PC/서버용 원스톱 파이프라인 (fetch -> 렌더링)
   toss_client.py       # (선택, 미검증) 토스증권 Open API 클라이언트 초안
   requirements.txt
   docx/
-    render_docx.js      # 데이터 JSON -> 동일 양식의 .docx(워드) 생성
+    render_docx.js      # 데이터 JSON -> 동일 양식의 .docx(워드) 생성 (차트 이미지 포함)
     package.json
 docs/
   AUTOMATION_GUIDE.md  # 매일 자동 실행되는 세션이 따르는 절차서
@@ -103,6 +105,17 @@ node scripts/docx/render_docx.js reports/sample/2026-08-24_sample.json /tmp/out/
 > (WebSearch 기반). 만약 KRX 접근이 가능한 자체 서버/PC에서 크론으로 돌린다면
 > `scripts/fetch_pykrx.py`로 지수·등락률 데이터를 더 정확하게 자동 수집할 수 있다.
 > 자세한 내용은 `docs/AUTOMATION_GUIDE.md` 참고.
+
+### 진짜 실시간 시세 + 차트가 꼭 필요하면 (로컬 파이프라인)
+
+이 저장소가 만들어진 클라우드 환경은 KRX/증권사 API 서버 접속 자체가 막혀 있어서,
+WebSearch(뉴스 기반)로는 기사에 나온 숫자만 쓸 수 있고 실제 가격 차트도 못 만든다.
+**정확한 API 시세와 차트가 꼭 필요하면** 방화벽 제약 없는 로컬 PC/서버에서
+`scripts/run_local.sh`를 크론에 걸면 된다 — `fetch_pykrx.py`가 몇 초 안에 지수·
+등락률 상위종목·최근 10거래일 차트(PNG, `build_chart.py`)까지 정확하게 가져오고,
+"왜 움직였는지" 같은 판단이 필요한 항목만 TODO로 남겨 사람이 빠르게 채우게 한다.
+장마감 15:30 → 15:40 완성 목표를 실제로 맞추려면 이 방식이 필요하다. 자세한 내용은
+`docs/AUTOMATION_GUIDE.md`의 "로컬 PC/사내 서버에서 완전 자동화" 참고.
 
 ### 토스증권 Open API (선택, 미검증)
 
