@@ -76,11 +76,6 @@ function persistenceColor(text) {
   return DOWN; // "약세 지속" 등
 }
 
-function stars(n) {
-  const k = Number(n) || 2;
-  return "★".repeat(k) + "☆".repeat(3 - k);
-}
-
 // ---- 텍스트/셀 헬퍼 ----
 
 function run(text, opts = {}) {
@@ -156,10 +151,8 @@ function buildTitleRow(data) {
     p([run(data.subtitle, { size: 20, color: INK_SOFT })]),
   ];
   const bylineLines = [
-    p([run(`${data.date} (${data.weekday}) 장마감`, { bold: true, size: 18, color: INK })]),
-    p([run(`발행 ${data.generated_at} · 당일 배포`, { size: 16, color: INK_SOFT })], { spacing: { after: 100 } }),
     p([run(`${data.branch_name} ${data.department}`, { bold: true, size: 17, color: HY_DEEP })]),
-    p([run(data.author, { size: 16, color: INK_SOFT })]),
+    p([run(data.author, { bold: true, size: 16, color: INK })]),
     p([run(data.contact, { size: 16, color: INK_SOFT })]),
   ];
   return fullWidthTable(
@@ -172,31 +165,6 @@ function buildTitleRow(data) {
       }),
     ],
     [Math.round(PAGE_W * 0.68), Math.round(PAGE_W * 0.32)]
-  );
-}
-
-function buildSkkBox(data) {
-  const rows = [
-    ["SIGNAL", data.signal],
-    ["KEY", data.key_point],
-    ["STEP", data.step],
-  ];
-  return fullWidthTable(
-    rows.map(
-      ([label, text]) =>
-        new TableRow({
-          children: [
-            cell({
-              children: p([run(label, { bold: true, size: 15, color: WHITE })], { alignment: AlignmentType.CENTER }),
-              fill: HY_DEEP,
-              width: PAGE_W * 0.1,
-              borders: lineBorder(HY_TINT_LINE, 4),
-            }),
-            cell({ children: p([run(text, { size: 18 })]), width: PAGE_W * 0.9, borders: lineBorder(HY_TINT_LINE, 4) }),
-          ],
-        })
-    ),
-    [Math.round(PAGE_W * 0.1), Math.round(PAGE_W * 0.9)]
   );
 }
 
@@ -239,68 +207,17 @@ function buildIndicatorsTable(indicators) {
   return fullWidthTable(rows, widths);
 }
 
-function infoBox(title, lines, width) {
-  return new Table({
-    width: { size: width, type: WidthType.DXA },
-    columnWidths: [width],
-    rows: [
-      new TableRow({ children: [cell({ children: p([run(title, { bold: true, size: 16, color: HY_DEEP })]), fill: HY_TINT, width, borders: lineBorder() })] }),
-      new TableRow({ children: [cell({ children: lines.map((l) => p([run(l, { size: 15 })], { spacing: { after: 40 } })), width, borders: lineBorder() })] }),
-    ],
-  });
-}
-
-function pngDimensions(buf) {
-  // PNG 헤더의 IHDR 청크에서 폭/높이를 읽는다 (오프셋 16, 24: 각 4바이트 빅엔디언).
-  return { width: buf.readUInt32BE(16), height: buf.readUInt32BE(20) };
-}
-
-function buildChartImage(chartPath) {
-  if (!chartPath || !fs.existsSync(chartPath)) return null;
-  const buf = fs.readFileSync(chartPath);
-  const { width, height } = pngDimensions(buf);
-  const targetWidthPx = Math.round((PAGE_W / 1440) * 96); // dxa -> 96dpi 픽셀, 본문 전체 폭
-  const targetHeightPx = Math.round((height / width) * targetWidthPx);
-  return p([new ImageRun({ data: buf, transformation: { width: targetWidthPx, height: targetHeightPx }, type: "png" })], {
-    alignment: AlignmentType.CENTER,
-    spacing: { before: 120, after: 60 },
-  });
-}
-
-function buildFlowsBreadth(flows, breadth) {
-  const half = Math.round(PAGE_W * 0.49);
-  const flowLines = [
-    `KOSPI 외국인 ${flows.kospi.foreign} · 기관 ${flows.kospi.inst} · 개인 ${flows.kospi.retail}`,
-    `KOSDAQ 외국인 ${flows.kosdaq.foreign} · 기관 ${flows.kosdaq.inst} · 개인 ${flows.kosdaq.retail}`,
-    `선물 ${flows.futures}`,
-  ];
-  const breadthLines = [
-    `상승/하락 ${breadth.advance_decline} — ${breadth.note}`,
-    `거래대금 ${breadth.trading_value}`,
-    `신용잔고 ${breadth.margin_balance}`,
-  ];
-  return new Table({
-    width: { size: PAGE_W, type: WidthType.DXA },
-    columnWidths: [half, half],
-    rows: [
-      new TableRow({
-        children: [
-          cell({ children: [infoBox("투자자별 순매수 (억원)", flowLines, half)], width: half, borders: noBorder(), margins: { top: 0, bottom: 0, left: 0, right: 80 } }),
-          cell({ children: [infoBox("시장 폭 (Breadth)", breadthLines, half)], width: half, borders: noBorder(), margins: { top: 0, bottom: 0, left: 80, right: 0 } }),
-        ],
-      }),
-    ],
-  });
-}
-
 function sectorCell(sector, colSpan, rowSpan) {
   const heat = HEAT[heatClass(sector.change_pct)];
+  const children = [
+    p([run(sector.name, { bold: true, size: 16, color: heat.fg })], { alignment: AlignmentType.CENTER }),
+    p([run(`${sector.change_pct}%`, { bold: true, size: 17, color: heat.fg })], { alignment: AlignmentType.CENTER }),
+  ];
+  if (sector.top_stock) {
+    children.push(p([run(sector.top_stock, { size: 11, color: heat.fg })], { alignment: AlignmentType.CENTER }));
+  }
   return cell({
-    children: [
-      p([run(sector.name, { bold: true, size: 16, color: heat.fg })], { alignment: AlignmentType.CENTER }),
-      p([run(`${sector.change_pct}%`, { bold: true, size: 17, color: heat.fg })], { alignment: AlignmentType.CENTER }),
-      p([run(`${sector.weight_pct ?? sector.weight}%`, { size: 12, color: heat.fg })], { alignment: AlignmentType.CENTER }),
-    ],
+    children,
     fill: heat.fill,
     colSpan,
     rowSpan,
@@ -347,14 +264,14 @@ function buildSectorMap(sectorsIn) {
 }
 
 function buildIssueTable(stocks) {
-  const widths = [0.14, 0.09, 0.4, 0.09, 0.28].map((f) => Math.round(PAGE_W * f));
+  const widths = [0.13, 0.09, 0.41, 0.09, 0.28].map((f) => Math.round(PAGE_W * f));
   const rows = [headerRow(["종목", "등락률", "움직인 이유", "지속성", "언제·무엇을 확인"], widths)];
   stocks.forEach((s) => {
     const t = trend(s.change_pct);
     rows.push(
       new TableRow({
         children: [
-          cell({ children: p([run(`${s.name}(${s.ticker})`, { size: 16, bold: true })]) , width: widths[0] }),
+          cell({ children: p([run(s.name, { size: 16, bold: true })]), width: widths[0] }),
           cell({ children: p([run(`${t.symbol} ${s.change_pct}%`, { size: 16, color: t.color, bold: true })], { alignment: AlignmentType.RIGHT }), width: widths[1] }),
           cell({ children: p([run(s.reason, { size: 14, color: INK_SOFT })]), width: widths[2] }),
           cell({ children: p([run(s.persistence, { size: 15, color: persistenceColor(s.persistence), bold: true })], { alignment: AlignmentType.RIGHT }), width: widths[3] }),
@@ -366,70 +283,87 @@ function buildIssueTable(stocks) {
   return fullWidthTable(rows, widths);
 }
 
-function buildCalendarTable(items) {
-  const widths = [0.14, 0.28, 0.1, 0.48].map((f) => Math.round(PAGE_W * f));
-  const rows = [headerRow(["일시", "이벤트", "중요도", "체크포인트 / 영향 종목"], widths)];
-  items.forEach((c) => {
-    const high = Number(c.importance) >= 3;
-    rows.push(
-      new TableRow({
-        children: [
-          cell({ children: p([run(c.datetime, { size: 15, bold: true })]), width: widths[0], fill: high ? HY_TINT : undefined }),
-          cell({ children: p([run(c.event, { size: 15, bold: high, color: high ? INK : undefined })]), width: widths[1], fill: high ? HY_TINT : undefined }),
-          cell({ children: p([run(stars(c.importance), { size: 15, color: HY_MID })], { alignment: AlignmentType.RIGHT }), width: widths[2], fill: high ? HY_TINT : undefined }),
-          cell({ children: p([run(c.checkpoint, { size: 14, color: INK_SOFT })]), width: widths[3], fill: high ? HY_TINT : undefined }),
-        ],
+function buildCalendarGrid(calendar) {
+  const days = (calendar && calendar.days) || [];
+  if (!days.length) return p([run("")]);
+  const n = days.length;
+  const colW = Math.round(PAGE_W / n);
+  const widths = Array.from({ length: n }, () => colW);
+
+  const head = new TableRow({
+    children: days.map((d) =>
+      cell({
+        children: p(
+          [run(d.date, { bold: true, size: 16, color: WHITE }), run(`  ${d.dow || ""}`, { size: 12, color: WHITE })],
+          { alignment: AlignmentType.CENTER }
+        ),
+        fill: HY_DEEP,
+        width: colW,
+        borders: lineBorder(HY_DEEP, 4),
       })
-    );
+    ),
   });
-  return fullWidthTable(rows, widths);
+
+  const body = new TableRow({
+    children: days.map((d) => {
+      const paras = [];
+      (d.events || []).forEach((e) => {
+        const starsTxt = e.stars ? ` ${e.stars}` : "";
+        paras.push(
+          p(
+            [run(`${e.time || ""}${starsTxt} `, { bold: true, size: 13, color: HY_MID }), run(e.title || "", { bold: true, size: 13, color: INK })],
+            { spacing: { after: 20 } }
+          )
+        );
+        if (e.note) paras.push(p([run(e.note, { size: 11, color: INK_SOFT })], { spacing: { after: 80 } }));
+      });
+      if (d.footer) paras.push(p([run(d.footer, { bold: true, size: 11, color: HY_DEEP })], { spacing: { before: 40 } }));
+      if (!paras.length) paras.push(p([run("")]));
+      return cell({ children: paras, width: colW, valign: VerticalAlign.TOP });
+    }),
+  });
+
+  return fullWidthTable([head, body], widths);
 }
 
-function buildStanceTable(stance) {
-  const third = Math.round(PAGE_W / 3);
-  const cols = [
-    ["유지", stance.maintain],
-    ["축소", stance.reduce],
-    ["현금·안내", stance.cash],
-  ];
+function buildNextWeek(text) {
+  if (!text) return null;
   return new Table({
     width: { size: PAGE_W, type: WidthType.DXA },
-    columnWidths: [third, third, third],
+    columnWidths: [PAGE_W],
     rows: [
       new TableRow({
-        children: cols.map(([label]) =>
-          cell({ children: p([run(label, { bold: true, size: 16, color: WHITE })], { alignment: AlignmentType.CENTER }), fill: HY_DEEP, width: third })
-        ),
-      }),
-      new TableRow({
-        children: cols.map(([, text]) => cell({ children: p([run(text, { size: 15 })]), width: third, valign: VerticalAlign.TOP })),
+        children: [
+          cell({
+            children: p([run("다음 주 예고  ", { bold: true, size: 14, color: INK }), run(text, { size: 14, color: INK_SOFT })]),
+            fill: HY_TINT,
+            width: PAGE_W,
+            borders: lineBorder(),
+          }),
+        ],
       }),
     ],
   });
 }
 
-function buildCompliance(branchName) {
-  const bullets = [
-    "본 자료는 지점 내부 참고자료로, 제3자에게 사전 제공된 사실이 없습니다.",
-    "작성자는 자료 작성일 현재 본 자료에 언급된 종목과 재산적 이해관계가 없습니다.",
-    "본 자료의 수치는 언론 보도 및 시장 데이터를 정리한 것으로 당사 리서치센터의 공식 견해가 아니며, 정확성·완전성을 보장하지 않습니다.",
-  ];
-  return [
-    p([run("Compliance Notice", { bold: true, size: 16, color: INK })], { spacing: { before: 260, after: 60 } }),
-    ...bullets.map((b) => p([run(`·  ${b}`, { size: 13, color: INK_FAINT })], { spacing: { after: 20 } })),
-  ];
+function buildCompliance() {
+  const text =
+    "본 자료는 당사 지점 고객 및 임직원의 참고용으로 작성된 것으로 투자권유 또는 투자자문 목적이 아니며, 기재된 수치·전망은 오차가 발생할 수 있습니다. " +
+    "투자의 최종 판단과 책임은 투자자 본인에게 있습니다. 당사 허락 없이 복사·대여·배포될 수 없습니다.";
+  return [p([run(text, { size: 13, color: INK_FAINT })], { spacing: { before: 260 } })];
 }
 
 function buildFooter(data) {
-  return p(
-    [
-      run(
-        `작성·문의: 한양증권 ${data.branch_name} ${data.department} ${data.author} (${data.contact}) · 투자 권유 목적이 아니며 투자판단의 책임은 투자자 본인에게 있습니다.`,
-        { size: 12, color: INK_FAINT }
-      ),
-    ],
-    { spacing: { before: 160 } }
-  );
+  return p([run(`DAILY MARKET WRAP · ${data.branch_name}`, { size: 12, color: INK_FAINT })], {
+    alignment: AlignmentType.CENTER,
+    spacing: { before: 160 },
+  });
+}
+
+function dateShort(dateStr) {
+  if (!dateStr) return "";
+  const [, m, d] = dateStr.split("-");
+  return `${parseInt(m, 10)}/${parseInt(d, 10)}`;
 }
 
 // ---- 메인 ----
@@ -441,42 +375,36 @@ function main() {
     process.exit(1);
   }
   const data = JSON.parse(fs.readFileSync(dataPath, "utf-8"));
+  const ds = dateShort(data.date);
 
   // render_report.py 와 동일한 파생값 계산 (weight_pct)
   const totalWeight = (data.sectors || []).reduce((sum, s) => sum + (asFloat(s.weight) || 0), 0) || 1;
   const sectors = (data.sectors || []).map((s) => ({ ...s, weight_pct: s.weight_pct ?? Math.round(((asFloat(s.weight) || 0) / totalWeight) * 1000) / 10 }));
 
   const logoPath = path.join(__dirname, "..", "..", "templates", "assets", "hy_logo_compact_color.png");
+  const nextWeek = buildNextWeek((data.calendar || {}).next_week);
 
   const children = [
     buildMasthead(logoPath, data.branch_name),
     p([run("")]),
     buildEyebrow(data.eyebrow || "시장 마감 브리프"),
     buildTitleRow(data),
-    p([run("")]),
-    buildSkkBox(data),
 
-    sectionHeading("Ⅰ. 지수 · 대외 지표"),
+    sectionHeading("Ⅰ. 지수 · 시장 지표", `국내 지수·환율은 ${ds} 종가(한국거래소) · 금·유가는 ${ds} 장중 시세`),
     buildIndicatorsTable(data.indicators || []),
-    p([run("")]),
-    buildFlowsBreadth(data.flows || {}, data.breadth || {}),
-    buildChartImage(data.chart_png_path) || p([run("")]),
 
-    sectionHeading("Ⅱ. 업종 동향 맵", "박스 크기 = 시가총액 비중, 색 = 당일 등락률"),
+    sectionHeading("Ⅱ. 업종 동향 맵", `박스 크기 = 업종 시가총액 비중, 색·수치 = 해당 업종 대표종목 등락률 (${ds} 종가 기준)`),
     buildSectorMap(sectors),
-    p([run(`자료: KRX, 한양증권 ${data.branch_name} 재구성`, { size: 12, color: INK_FAINT })], { alignment: AlignmentType.RIGHT, spacing: { before: 60 } }),
-    p([run(data.sector_prose || "", { size: 15 })], { spacing: { before: 100 } }),
+    p([run(`자료: KRX, 언론 보도 종합 / 한양증권 ${data.branch_name} 재구성`, { size: 12, color: INK_FAINT })], { alignment: AlignmentType.RIGHT, spacing: { before: 60 } }),
 
     sectionHeading("Ⅲ. 이슈 종목 — 왜 움직였고, 이어질 것인가"),
     buildIssueTable(data.issue_stocks || []),
 
-    sectionHeading("Ⅳ. 캘린더 — 언제, 무엇을, 왜 봐야 하나", "시각은 한국시간 기준"),
-    buildCalendarTable(data.calendar || []),
+    sectionHeading("Ⅳ. 이번 주 캘린더", "시각은 한국시간(KST) · ★★★ = 지수 방향을 바꿀 수 있는 이벤트"),
+    buildCalendarGrid(data.calendar),
+    ...(nextWeek ? [p([run("")]), nextWeek] : []),
 
-    sectionHeading("지점 대응 요약 — 이번 주"),
-    buildStanceTable(data.stance || {}),
-
-    ...buildCompliance(data.branch_name),
+    ...buildCompliance(),
     buildFooter(data),
   ];
 

@@ -72,7 +72,7 @@ def exchange_rate_indicator() -> dict:
     result = _get("/api/v1/exchange-rate", {"baseCurrency": "USD", "quoteCurrency": "KRW"})
     rate = float(result["rate"])
     return {
-        "label": "원/달러",
+        "label": "원/달러 환율",
         "close": f"{rate:,.2f}",
         "change_pt": "-",
         "change_pct": "-",
@@ -116,7 +116,7 @@ def stock_names(symbols: list) -> dict:
 MIN_TRADING_AMOUNT_KRW = 3_000_000_000  # 30억원 미만 거래대금은 제외 (품질 낮은 픽 방지)
 
 
-def top_movers(n: int = 4) -> list:
+def top_movers(n: int = 3) -> list:
     """등락률 상위(급상승/급하락) 후보를 가져오되, 투자유의종목(관리종목·정리매매 등 —
     가격제한폭이 없어 ±30%를 벗어나는 비정상적인 등락이 나올 수 있음)과 거래대금이
     너무 적은 종목은 제외한다. 여유 있게 더 뽑은 뒤 필터링해서 n개를 채운다."""
@@ -203,33 +203,26 @@ def main():
 
     data = {
         "_note": "fetch_toss.py로 자동 수집(토스증권 Open API). TODO 표시된 정성적 필드"
-                 "(이유/지속성/캘린더/SIGNAL·KEY·STEP/지점 대응)와 sectors(업종, Toss API"
-                 " 미지원)는 직접 채우거나 뉴스 조사로 채울 것.",
+                 "(제목/이유/지속성/캘린더)와 sectors(업종, Toss API 미지원 — pykrx나 뉴스로"
+                 " change_pct/weight/top_stock 채울 것)는 직접 채우거나 뉴스 조사로 채울 것.",
         "date": today.isoformat(),
         "weekday": weekday,
         "branch_name": "인천프리미어지점",
         "department": "인턴",
         "author": "김형준",
-        "contact": "010-5912-9992",
-        "generated_at": datetime.datetime.now().strftime("%H:%M"),
+        "contact": "khj1227@hygood.co.kr",
         "eyebrow": "시장 마감 브리프",
         "title": "TODO: 오늘 시장을 관통하는 한 문장",
         "subtitle": "TODO",
-        "signal": "TODO",
-        "key_point": "TODO",
-        "step": "TODO",
         "indicators": [
             kospi, kosdaq, fx,
-            {"label": "미 10년물", "close": "-", "change_pt": "-", "change_pct": "-", "note": "TODO (Toss API 미지원)"},
-            {"label": "S&P500 선물 / WTI", "close": "-", "change_pt": "", "change_pct": "-", "note": "TODO (Toss API 미지원)"},
+            {"label": "국제 금 (현물)", "close": "-", "change_pt": "-", "change_pct": "-", "note": "TODO (Toss API 미지원 — 뉴스로 채우기)"},
+            {"label": "WTI 원유", "close": "-", "change_pt": "-", "change_pct": "-", "note": "TODO (Toss API 미지원 — 뉴스로 채우기)"},
         ],
         "flows": flows,
-        "breadth": {"advance_decline": "-", "note": "TODO", "trading_value": "-", "margin_balance": "-"},
         "sectors": [],
-        "sector_prose": "TODO",
         "issue_stocks": issue_stocks,
-        "calendar": [],
-        "stance": {"maintain": "TODO", "reduce": "TODO", "cash": "TODO"},
+        "calendar": {"days": [], "next_week": ""},
         "notes": "특이사항 없음",
     }
     if chart_png_path:

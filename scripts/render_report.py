@@ -25,8 +25,8 @@ ASSET_DIR = TEMPLATE_DIR / "assets"
 TREEMAP_DX = 1000.0
 TREEMAP_DY = 300.0
 # templates/daily_report_template.html.j2 의 .heatmap { height: ... } 와 맞춰야 한다.
-HEATMAP_CSS_HEIGHT_PX = 195
-COMPACT_BOX_THRESHOLD_PX = 34
+HEATMAP_CSS_HEIGHT_PX = 260
+COMPACT_BOX_THRESHOLD_PX = 40
 
 PERSISTENCE_CLASS = {
     "높음": "pill-strong",
@@ -140,12 +140,24 @@ def with_persistence(stock: dict) -> dict:
     return stock
 
 
-def with_importance(item: dict) -> dict:
-    item = dict(item)
-    n = int(item.get("importance", 2) or 2)
-    item["stars"] = "★" * n + "☆" * (3 - n)
-    item["high"] = n >= 3
-    return item
+def build_calendar(calendar) -> dict:
+    """요일별(월~금) 그리드 캘린더. 각 날짜에 이벤트 여러 개, 하단에 한 줄 요약(footer)이
+    올 수 있고, 전체 아래에 '다음 주 예고' 한 줄이 붙는다."""
+    calendar = dict(calendar) if isinstance(calendar, dict) else {}
+    days = []
+    for d in calendar.get("days", []):
+        d = dict(d)
+        events = []
+        for e in d.get("events", []):
+            e = dict(e)
+            n = int(e.get("importance", 0) or 0)
+            e["stars"] = "★" * n if n > 0 else ""
+            events.append(e)
+        d["events"] = events
+        days.append(d)
+    calendar["days"] = days
+    calendar.setdefault("next_week", "")
+    return calendar
 
 
 def build_context(data: dict) -> dict:
@@ -157,48 +169,25 @@ def build_context(data: dict) -> dict:
         ctx["issue_stocks"] = [with_persistence(with_trend(s, "change_pct")) for s in ctx["issue_stocks"]]
     if "sectors" in ctx:
         ctx["sectors"] = build_treemap([with_heat(s) for s in ctx["sectors"]])
-    if "calendar" in ctx:
-        ctx["calendar"] = [with_importance(c) for c in ctx["calendar"]]
+    ctx["calendar"] = build_calendar(ctx.get("calendar"))
 
     ctx.setdefault("branch_name", "인천프리미어지점")
     # 참고: 한양증권 공식 점포 안내상 명칭은 "인천프리미어센터"이나, 사용자 제공
     # 레퍼런스 문서에서 일관되게 "인천프리미어지점"으로 표기되어 있어 이를 따랐다.
     ctx.setdefault("department", "인턴")
     ctx.setdefault("author", "김형준")
-    ctx.setdefault("contact", "010-5912-9992")
+    ctx.setdefault("contact", "khj1227@hygood.co.kr")
     ctx.setdefault("eyebrow", "시장 마감 브리프")
     ctx.setdefault("title", "")
     ctx.setdefault("subtitle", "")
-    ctx.setdefault("signal", "")
-    ctx.setdefault("key_point", "")
-    ctx.setdefault("step", "")
     ctx.setdefault("indicators", [])
-    flows = ctx.setdefault("flows", {})
-    flows.setdefault("kospi", {"foreign": "-", "inst": "-", "retail": "-"})
-    flows.setdefault("kosdaq", {"foreign": "-", "inst": "-", "retail": "-"})
-    flows.setdefault("futures", "-")
-    breadth = ctx.setdefault("breadth", {})
-    breadth.setdefault("advance_decline", "-")
-    breadth.setdefault("note", "")
-    breadth.setdefault("trading_value", "-")
-    breadth.setdefault("margin_balance", "-")
     ctx.setdefault("sectors", [])
-    ctx.setdefault("sector_prose", "")
     ctx.setdefault("issue_stocks", [])
-    ctx.setdefault("calendar", [])
-    stance = ctx.setdefault("stance", {})
-    stance.setdefault("maintain", "")
-    stance.setdefault("reduce", "")
-    stance.setdefault("cash", "")
     ctx.setdefault("notes", "특이사항 없음")
 
-    ctx["chart_png"] = None
-    chart_path = ctx.pop("chart_png_path", None)
-    if chart_path and Path(chart_path).exists():
-        data_bytes = Path(chart_path).read_bytes()
-        ctx["chart_png"] = f"data:image/png;base64,{base64.b64encode(data_bytes).decode()}"
-    elif ctx.get("chart_png_b64"):
-        ctx["chart_png"] = f"data:image/png;base64,{ctx.pop('chart_png_b64')}"
+    if "date" in ctx:
+        y, m, d = ctx["date"].split("-")
+        ctx["date_short"] = f"{int(m)}/{int(d)}"
 
     ctx["logo_full_color"] = logo_data_uri("hy_logo_full_color.png")
     ctx["logo_full_white"] = logo_data_uri("hy_logo_full_white.png")

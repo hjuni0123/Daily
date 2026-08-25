@@ -74,21 +74,10 @@
 
   .byline-box {
     flex: none; width: 180px; border: 1px solid var(--hy-tint-line);
-    padding: 5px 9px; font-size: 10px; color: var(--ink-soft); line-height: 1.4;
+    padding: 7px 9px; font-size: 11px; color: var(--ink-soft); line-height: 1.55;
   }
-  .byline-box .dt { font-weight: 700; color: var(--ink); font-size: 11.5px; }
-  .byline-box .gap { height: 3px; }
-  .byline-box .who { font-weight: 700; color: var(--hy-deep); }
-
-  .skk-box { border: 1px solid var(--hy-tint-line); margin-top: 8px; }
-  .skk-row { display: flex; border-bottom: 1px solid var(--hy-tint-line); }
-  .skk-row:last-child { border-bottom: none; }
-  .skk-label {
-    flex: none; width: 68px; background: var(--hy-deep); color: #fff;
-    font-weight: 700; font-size: 10.5px; letter-spacing: 0.5px;
-    display: flex; align-items: center; justify-content: center; text-align: center; padding: 5px 4px;
-  }
-  .skk-text { padding: 5px 12px; font-size: 11.5px; display: flex; align-items: center; }
+  .byline-box .who { font-weight: 700; color: var(--hy-deep); font-size: 11.5px; }
+  .byline-box .author { font-weight: 700; color: var(--ink); }
 
   h2 {
     font-size: 13.5px; font-weight: 700; color: var(--ink); margin: 14px 0 6px 0;
@@ -108,28 +97,16 @@
   .note-col { text-align: left; color: var(--ink-soft); font-size: 11.5px; }
   .nowrap { white-space: nowrap; }
 
-  .flow-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 6px 0 0 0; }
-  .info-box { border: 1px solid var(--hy-tint-line); }
-  .info-box .ibhead {
-    background: var(--hy-tint); color: var(--hy-deep); font-weight: 700;
-    font-size: 11px; padding: 4px 10px; border-bottom: 1px solid var(--hy-tint-line);
-  }
-  .info-box .ibbody { padding: 6px 10px; font-size: 11px; line-height: 1.6; }
-  .info-box .ibbody .up, .info-box .ibbody .down { font-weight: 700; }
-
-  .chart-wrap { margin-top: 8px; text-align: center; }
-  .chart-wrap img { max-width: 100%; height: auto; display: inline-block; }
-
-  .heatmap { position: relative; height: 195px; margin-top: 5px; }
+  .heatmap { position: relative; height: 260px; margin-top: 5px; }
   .heat-box {
     position: absolute;
     display: flex; flex-direction: column; align-items: center; justify-content: center;
-    padding: 2px 4px; text-align: center; overflow: hidden;
+    padding: 3px 5px; text-align: center; overflow: hidden;
     outline: 1px solid var(--paper);
   }
-  .heat-box .hname { font-size: 10px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
-  .heat-box .hpct { font-size: 11px; font-weight: 700; font-variant-numeric: tabular-nums; }
-  .heat-box .hwt { font-size: 9px; opacity: 0.85; }
+  .heat-box .hname { font-size: 10.5px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+  .heat-box .hpct { font-size: 12px; font-weight: 700; font-variant-numeric: tabular-nums; }
+  .heat-box .htop { font-size: 8.8px; opacity: 0.9; margin-top: 1px; max-width: 100%; overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
   .heat-up-3 { background: var(--heat-up-3); color: var(--heat-up-3-fg); }
   .heat-up-2 { background: var(--heat-up-2); color: var(--heat-up-2-fg); }
   .heat-up-1 { background: var(--heat-up-1); color: var(--heat-up-1-fg); }
@@ -149,23 +126,36 @@
   .pill-neutral { color: var(--ink-faint); font-weight: 700; }
   .pill-weak { color: var(--down); font-weight: 700; }
 
-  .stance-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 6px; }
-  .stance-col { border: 1px solid var(--hy-tint-line); }
-  .stance-head { background: var(--hy-deep); color: #fff; font-weight: 700; font-size: 11.5px; padding: 4px 10px; text-align: center; }
-  .stance-body { padding: 6px 10px; font-size: 11px; line-height: 1.55; }
+  .cal-grid { display: grid; gap: 0; border: 1px solid var(--hy-tint-line); margin-top: 5px; }
+  .cal-day { border-left: 1px solid var(--hy-tint-line); display: flex; flex-direction: column; }
+  .cal-day:first-child { border-left: none; }
+  .cal-head {
+    background: var(--hy-deep); color: #fff; text-align: center; padding: 4px 2px;
+    font-size: 11px; font-weight: 700; letter-spacing: 0.3px;
+  }
+  .cal-head .dow { font-size: 9px; font-weight: 300; opacity: 0.85; margin-left: 3px; }
+  .cal-body { padding: 5px 6px; flex: 1; }
+  .cal-event { margin-bottom: 5px; }
+  .cal-event:last-child { margin-bottom: 0; }
+  .cal-event .etitle { font-size: 10px; font-weight: 700; color: var(--ink); line-height: 1.35; }
+  .cal-event .etime { color: var(--hy-mid); font-weight: 700; }
+  .cal-event .estars { color: var(--hy-mid); letter-spacing: 0.5px; }
+  .cal-event .enote { font-size: 9px; color: var(--ink-soft); line-height: 1.35; margin-top: 1px; }
+  .cal-foot {
+    font-size: 9px; font-weight: 700; color: var(--hy-deep); text-align: center;
+    padding: 3px 4px; border-top: 1px solid var(--hy-tint-line); background: var(--hy-tint);
+  }
+  .cal-next {
+    border: 1px solid var(--hy-tint-line); border-top: none; background: var(--hy-tint);
+    padding: 5px 10px; font-size: 10.5px; color: var(--ink-soft);
+  }
+  .cal-next b { color: var(--ink); }
 
   .compliance { margin-top: 12px; padding-top: 6px; border-top: 1px solid var(--hy-tint-line); }
-  .compliance .heading { font-size: 11px; font-weight: 700; color: var(--ink); margin-bottom: 4px; }
-  .compliance ul { margin: 0; padding-left: 14px; }
-  .compliance li { font-size: 10px; color: var(--ink-faint); margin-bottom: 2px; list-style: none; position: relative; }
-  .compliance li::before { content: "·"; color: var(--hy-mid); position: absolute; left: -10px; }
+  .compliance p { font-size: 9.5px; color: var(--ink-faint); margin: 0; line-height: 1.5; }
 
-  .footer {
-    margin-top: 6px; padding-top: 5px; border-top: 1px solid var(--hy-tint-line);
-    display: flex; align-items: center; justify-content: space-between; gap: 10px;
-  }
-  .footer img { height: 14px; opacity: 0.8; flex: none; }
-  .footer .disclaimer { font-size: 9.5px; color: var(--ink-faint); text-align: right; }
+  .footer { margin-top: 6px; padding-top: 5px; border-top: 1px solid var(--hy-tint-line); }
+  .footer .disclaimer { font-size: 9.5px; color: var(--ink-faint); text-align: center; }
 </style>
 </head>
 <body>
@@ -185,22 +175,13 @@
       <div class="subtitle">{{ subtitle }}</div>
     </div>
     <div class="byline-box">
-      <div class="dt">{{ date }} ({{ weekday }}) 장마감</div>
-      <div>발행 {{ generated_at }} · 당일 배포</div>
-      <div class="gap"></div>
       <div class="who">{{ branch_name }} {{ department }}</div>
-      <div>{{ author }}</div>
+      <div class="author">{{ author }}</div>
       <div>{{ contact }}</div>
     </div>
   </div>
 
-  <div class="skk-box">
-    <div class="skk-row"><div class="skk-label">SIGNAL</div><div class="skk-text">{{ signal }}</div></div>
-    <div class="skk-row"><div class="skk-label">KEY</div><div class="skk-text">{{ key_point }}</div></div>
-    <div class="skk-row"><div class="skk-label">STEP</div><div class="skk-text">{{ step }}</div></div>
-  </div>
-
-  <h2>Ⅰ. 지수 · 대외 지표</h2>
+  <h2>Ⅰ. 지수 · 시장 지표 <span class="h2-note">국내 지수·환율은 {{ date_short }} 종가(한국거래소) · 금·유가는 {{ date_short }} 장중 시세</span></h2>
   <div class="table-wrap"><table class="ruled">
     <tr><th>구분</th><th>종가</th><th>전일비</th><th>등락률</th><th class="note-col">해석</th></tr>
     {% for i in indicators -%}
@@ -214,55 +195,27 @@
     {% endfor %}
   </table></div>
 
-  <div class="flow-grid">
-    <div class="info-box">
-      <div class="ibhead">투자자별 순매수 (억원)</div>
-      <div class="ibbody">
-        KOSPI &nbsp;외국인 <b>{{ flows.kospi.foreign }}</b>
-        · 기관 <b>{{ flows.kospi.inst }}</b>
-        · 개인 <b>{{ flows.kospi.retail }}</b><br>
-        KOSDAQ 외국인 <b>{{ flows.kosdaq.foreign }}</b>
-        · 기관 <b>{{ flows.kosdaq.inst }}</b>
-        · 개인 <b>{{ flows.kosdaq.retail }}</b><br>
-        선물 &nbsp;&nbsp;{{ flows.futures }}
-      </div>
-    </div>
-    <div class="info-box">
-      <div class="ibhead">시장 폭 (Breadth)</div>
-      <div class="ibbody">
-        상승 / 하락 &nbsp;<b>{{ breadth.advance_decline }}</b> — {{ breadth.note }}<br>
-        거래대금 &nbsp;{{ breadth.trading_value }}<br>
-        신용잔고 &nbsp;{{ breadth.margin_balance }}
-      </div>
-    </div>
-  </div>
-
-  {% if chart_png %}
-  <div class="chart-wrap"><img src="{{ chart_png }}" alt="지수 추이 차트"></div>
-  {% endif %}
-
-  <h2>Ⅱ. 업종 동향 맵 <span class="h2-note">박스 크기 = 시가총액 비중, 색 = 당일 등락률</span></h2>
+  <h2>Ⅱ. 업종 동향 맵 <span class="h2-note">박스 크기 = 업종 시가총액 비중, 색·수치 = 해당 업종 대표종목 등락률 ({{ date_short }} 종가 기준)</span></h2>
   <div class="heatmap">
     {% for s in sectors -%}
     <div class="heat-box {{ s.heat_class }}" style="left:{{ s.x_pct }}%; top:{{ s.y_pct }}%; width:{{ s.w_pct }}%; height:{{ s.h_pct }}%;">
       <div class="hname">{{ s.name }}</div>
       <div class="hpct">{{ s.change_pct }}%</div>
-      {% if not s.compact %}
-      <div class="hwt">{{ s.weight_pct }}%</div>
+      {% if not s.compact and s.top_stock %}
+      <div class="htop">{{ s.top_stock }}</div>
       {% endif %}
     </div>
     {% endfor %}
   </div>
   <div class="heat-legend"><span>-3%</span><div class="bar"></div><span>+3%</span></div>
-  <div class="sector-source">자료: KRX, 한양증권 {{ branch_name }} 재구성</div>
-  <p>{{ sector_prose }}</p>
+  <div class="sector-source">자료: KRX, 언론 보도 종합 / 한양증권 {{ branch_name }} 재구성</div>
 
   <h2>Ⅲ. 이슈 종목 — 왜 움직였고, 이어질 것인가</h2>
   <div class="table-wrap"><table class="ruled">
     <tr><th class="nowrap">종목</th><th class="nowrap">등락률</th><th class="note-col">움직인 이유 (뉴스·수급·실적)</th><th class="nowrap">지속성</th><th class="note-col">언제·무엇을 확인</th></tr>
     {% for s in issue_stocks -%}
     <tr>
-      <td class="nowrap">{{ s.name }}({{ s.ticker }})</td>
+      <td class="nowrap">{{ s.name }}</td>
       <td class="{{ s.trend_class }} nowrap">{{ s.trend_symbol }} {{ s.change_pct }}%</td>
       <td class="note-col">{{ s.reason }}</td>
       <td class="{{ s.persistence_class }} nowrap">{{ s.persistence }}</td>
@@ -271,38 +224,33 @@
     {% endfor %}
   </table></div>
 
-  <h2>Ⅳ. 캘린더 — 언제, 무엇을, 왜 봐야 하나 <span class="h2-note">시각은 한국시간 기준</span></h2>
-  <div class="table-wrap"><table class="ruled">
-    <tr><th>일시</th><th class="note-col">이벤트</th><th>중요도</th><th class="note-col">체크포인트 / 영향 종목</th></tr>
-    {% for c in calendar -%}
-    <tr style="{{ 'background:var(--hy-tint);' if c.high else '' }}">
-      <td style="white-space:nowrap;">{{ c.datetime }}</td>
-      <td class="note-col" style="{{ 'font-weight:700;color:var(--ink);' if c.high else '' }}">{{ c.event }}</td>
-      <td style="letter-spacing:1px;color:var(--hy-mid);">{{ c.stars }}</td>
-      <td class="note-col">{{ c.checkpoint }}</td>
-    </tr>
+  <h2>Ⅳ. 이번 주 캘린더 <span class="h2-note">시각은 한국시간(KST) · ★★★ = 지수 방향을 바꿀 수 있는 이벤트</span></h2>
+  <div class="cal-grid" style="grid-template-columns: repeat({{ calendar.days|length }}, 1fr);">
+    {% for d in calendar.days -%}
+    <div class="cal-day">
+      <div class="cal-head">{{ d.date }} <span class="dow">{{ d.dow }}</span></div>
+      <div class="cal-body">
+        {% for e in d.events -%}
+        <div class="cal-event">
+          <div class="etitle"><span class="etime">{{ e.time }}</span>{% if e.stars %} <span class="estars">{{ e.stars }}</span>{% endif %} {{ e.title }}</div>
+          {% if e.note %}<div class="enote">{{ e.note }}</div>{% endif %}
+        </div>
+        {% endfor %}
+      </div>
+      {% if d.footer %}<div class="cal-foot">{{ d.footer }}</div>{% endif %}
+    </div>
     {% endfor %}
-  </table></div>
-
-  <h2>지점 대응 요약 — 이번 주</h2>
-  <div class="stance-grid">
-    <div class="stance-col"><div class="stance-head">유지</div><div class="stance-body">{{ stance.maintain }}</div></div>
-    <div class="stance-col"><div class="stance-head">축소</div><div class="stance-body">{{ stance.reduce }}</div></div>
-    <div class="stance-col"><div class="stance-head">현금·안내</div><div class="stance-body">{{ stance.cash }}</div></div>
   </div>
+  {% if calendar.next_week %}
+  <div class="cal-next"><b>다음 주 예고</b> &nbsp;{{ calendar.next_week }}</div>
+  {% endif %}
 
   <div class="compliance">
-    <div class="heading">Compliance Notice</div>
-    <ul>
-      <li>본 자료는 지점 내부 참고자료로, 제3자에게 사전 제공된 사실이 없습니다.</li>
-      <li>작성자는 자료 작성일 현재 본 자료에 언급된 종목과 재산적 이해관계가 없습니다.</li>
-      <li>본 자료의 수치는 언론 보도 및 시장 데이터를 정리한 것으로 당사 리서치센터의 공식 견해가 아니며, 정확성·완전성을 보장하지 않습니다.</li>
-    </ul>
+    <p>본 자료는 당사 지점 고객 및 임직원의 참고용으로 작성된 것으로 투자권유 또는 투자자문 목적이 아니며, 기재된 수치·전망은 오차가 발생할 수 있습니다. 투자의 최종 판단과 책임은 투자자 본인에게 있습니다. 당사 허락 없이 복사·대여·배포될 수 없습니다.</p>
   </div>
 
   <div class="footer">
-    <img src="{{ logo_compact }}" alt="한양증권">
-    <div class="disclaimer">작성·문의: 한양증권 {{ branch_name }} {{ department }} {{ author }} ({{ contact }}) · 투자 권유 목적이 아니며 투자판단의 책임은 투자자 본인에게 있습니다.</div>
+    <div class="disclaimer">DAILY MARKET WRAP · {{ branch_name }}</div>
   </div>
 
 </div>

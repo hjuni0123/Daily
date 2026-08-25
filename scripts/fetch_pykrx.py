@@ -88,7 +88,7 @@ def sector_snapshot(ds: str) -> list:
     return sectors
 
 
-def top_movers(ds: str, n: int = 4) -> list:
+def top_movers(ds: str, n: int = 3) -> list:
     df = stock.get_market_price_change(ds, ds, market="ALL")
     if "시가총액" in df.columns:
         df = df[df["시가총액"] > 3000 * 1e8]
@@ -132,34 +132,26 @@ def main():
         chart_png_path = None
 
     data = {
-        "_note": "fetch_pykrx.py로 자동 수집. TODO 표시된 정성적 필드(이유/지속성/캘린더/"
-                 "SIGNAL·KEY·STEP/지점 대응)는 직접 채우거나 Claude에게 뉴스 조사를 시켜서 채울 것.",
+        "_note": "fetch_pykrx.py로 자동 수집. TODO 표시된 정성적 필드(제목/이유/지속성/캘린더/"
+                 "업종 top_stock)는 직접 채우거나 Claude에게 뉴스 조사를 시켜서 채울 것.",
         "date": iso_date,
         "weekday": weekday,
         "branch_name": "인천프리미어지점",
         "department": "인턴",
         "author": "김형준",
-        "contact": "010-5912-9992",
-        "generated_at": datetime.datetime.now().strftime("%H:%M"),
+        "contact": "khj1227@hygood.co.kr",
         "eyebrow": "시장 마감 브리프",
         "title": "TODO: 오늘 시장을 관통하는 한 문장",
         "subtitle": "TODO",
-        "signal": "TODO",
-        "key_point": "TODO",
-        "step": "TODO",
         "indicators": [
             kospi, kosdaq,
-            {"label": "원/달러", "close": "-", "change_pt": "-", "change_pct": "-", "note": "TODO (pykrx로는 못 가져옴)"},
-            {"label": "미 10년물", "close": "-", "change_pt": "-", "change_pct": "-", "note": "TODO (pykrx로는 못 가져옴)"},
-            {"label": "S&P500 선물 / WTI", "close": "-", "change_pt": "", "change_pct": "-", "note": "TODO (pykrx로는 못 가져옴)"},
+            {"label": "원/달러 환율", "close": "-", "change_pt": "-", "change_pct": "-", "note": "TODO (pykrx로는 못 가져옴)"},
+            {"label": "국제 금 (현물)", "close": "-", "change_pt": "-", "change_pct": "-", "note": "TODO (pykrx로는 못 가져옴)"},
+            {"label": "WTI 원유", "close": "-", "change_pt": "-", "change_pct": "-", "note": "TODO (pykrx로는 못 가져옴)"},
         ],
-        "flows": {"kospi": {"foreign": "-", "inst": "-", "retail": "-"}, "kosdaq": {"foreign": "-", "inst": "-", "retail": "-"}, "futures": "-"},
-        "breadth": {"advance_decline": "-", "note": "", "trading_value": "-", "margin_balance": "-"},
         "sectors": sector_snapshot(ds),
-        "sector_prose": "TODO",
         "issue_stocks": top_movers(ds),
-        "calendar": [],
-        "stance": {"maintain": "TODO", "reduce": "TODO", "cash": "TODO"},
+        "calendar": {"days": [], "next_week": ""},
         "notes": "특이사항 없음",
     }
     if chart_png_path:
@@ -168,7 +160,7 @@ def main():
     out_path.parent.mkdir(parents=True, exist_ok=True)
     out_path.write_text(json.dumps(data, ensure_ascii=False, indent=2), encoding="utf-8")
     print(f"저장 완료: {out_path}")
-    print("TODO로 남은 정성적 필드(제목/SIGNAL·KEY·STEP/이슈종목 이유/캘린더/지점 대응)를 채운 뒤")
+    print("TODO로 남은 정성적 필드(제목/이슈종목 이유/캘린더/업종 top_stock)를 채운 뒤")
     print(f"  python3 scripts/render_report.py {out_path}")
     print("을 실행하세요.")
 
