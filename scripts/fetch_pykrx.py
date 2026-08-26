@@ -57,10 +57,11 @@ def index_indicator(ds: str, ticker: str, label: str, note: str) -> dict:
     change_pct = change_pt / prev_close * 100
     return {
         "label": label,
+        "open": f"{today_row['시가']:,.2f}" if "시가" in today_row else "-",
+        "day_high": f"{today_row['고가']:,.2f}" if "고가" in today_row else "-",
         "close": f"{close:,.2f}",
-        "change_pt": f"{change_pt:+,.2f}",
-        "change_pct": f"{change_pct:+.2f}%",
-        "note": note,
+        "change_pct": f"{change_pct:+.2f}",
+        "note": f"{note} (전일비 {change_pt:+,.2f}, {change_pct:+.2f}%)",
     }
 
 
@@ -82,13 +83,15 @@ def sector_snapshot(ds: str) -> list:
             cap = row.get("상장시가총액", row.get("거래대금"))
             if change_pct is None or cap is None:
                 continue
-            sectors.append({"name": name, "change_pct": f"{change_pct:+.2f}", "weight": float(cap)})
+            sectors.append({"name": name, "bucket": f"{change_pct:+.2f}%", "weight": float(cap), "detail": ""})
     except Exception as e:  # pykrx 업종 API는 버전/환경별로 편차가 커서 실패를 허용한다
         print(f"경고: 업종 데이터 조회 실패({e}) — sectors는 빈 채로 둡니다.", file=sys.stderr)
     return sectors
 
 
-def top_movers(ds: str, n: int = 3) -> list:
+def top_movers(ds: str, n: int = 4) -> list:
+    """등락률 상위(급상승/급하락) 후보를 "금일 체크포인트" 표의 초안(섹터/관심종목)으로
+    쓴다. "오늘의 관점"·"근거"는 판단이 필요해 TODO로 남기고 fill_with_claude.py가 채운다."""
     df = stock.get_market_price_change(ds, ds, market="ALL")
     if "시가총액" in df.columns:
         df = df[df["시가총액"] > 3000 * 1e8]
@@ -96,13 +99,12 @@ def top_movers(ds: str, n: int = 3) -> list:
     losers = df.sort_values("등락률", ascending=True).head(n // 2)
     out = []
     for ticker, row in list(gainers.iterrows()) + list(losers.iterrows()):
+        name = row.get("종목명", ticker)
         out.append({
-            "name": row.get("종목명", ticker),
-            "ticker": ticker,
-            "change_pct": f"{row['등락률']:+.2f}",
-            "reason": "TODO: 왜 움직였는지 직접 채우기 (뉴스/사내 정보 기준)",
-            "persistence": "중립",
-            "checkpoint": "TODO",
+            "sector": "TODO",
+            "stocks": f"{name}({ticker}, {row['등락률']:+.2f}%)",
+            "view": "TODO",
+            "rationale": "TODO: 왜 움직였는지, 오늘의 관점과 근거를 직접 채우기 (뉴스/사내 정보 기준)",
         })
     return out
 
@@ -116,7 +118,6 @@ def main():
 
     ds = args.date or find_last_trading_day(datetime.date.today())
     iso_date = f"{ds[:4]}-{ds[4:6]}-{ds[6:]}"
-    weekday = "월화수목금토일"[datetime.date(int(ds[:4]), int(ds[4:6]), int(ds[6:])).weekday()]
 
     kospi = index_indicator(ds, "1001", "KOSPI", "TODO: 왜 이렇게 움직였는지 한 줄")
     kosdaq = index_indicator(ds, "2001", "KOSDAQ", "TODO: 왜 이렇게 움직였는지 한 줄")
@@ -132,26 +133,27 @@ def main():
         chart_png_path = None
 
     data = {
-        "_note": "fetch_pykrx.py로 자동 수집. TODO 표시된 정성적 필드(제목/이유/지속성/캘린더/"
-                 "업종 top_stock)는 직접 채우거나 Claude에게 뉴스 조사를 시켜서 채울 것.",
+        "_note": "fetch_pykrx.py로 자동 수집. TODO 표시된 정성적 필드(title/lead/checkpoints의"
+                 " sector·view·rationale/calendar)는 직접 채우거나 Claude에게 뉴스 조사를 시켜서 채울 것.",
         "date": iso_date,
-        "weekday": weekday,
         "branch_name": "인천프리미어지점",
         "department": "인턴",
         "author": "김형준",
         "contact": "khj1227@hygood.co.kr",
-        "eyebrow": "시장 마감 브리프",
         "title": "TODO: 오늘 시장을 관통하는 한 문장",
-        "subtitle": "TODO",
+        "lead": "TODO: 오늘 시황을 요약하는 1~3문장",
         "indicators": [
             kospi, kosdaq,
-            {"label": "원/달러 환율", "close": "-", "change_pt": "-", "change_pct": "-", "note": "TODO (pykrx로는 못 가져옴)"},
-            {"label": "국제 금 (현물)", "close": "-", "change_pt": "-", "change_pct": "-", "note": "TODO (pykrx로는 못 가져옴)"},
-            {"label": "WTI 원유", "close": "-", "change_pt": "-", "change_pct": "-", "note": "TODO (pykrx로는 못 가져옴)"},
+            {"label": "원/달러 환율", "open": "-", "day_high": "-", "close": "-", "note": "TODO (pykrx로는 못 가져옴)"},
+            {"label": "WTI 원유", "open": "-", "day_high": "-", "close": "-", "note": "TODO (pykrx로는 못 가져옴)"},
+            {"label": "필라델피아 반도체", "open": "-", "day_high": "-", "close": "-", "note": "TODO (pykrx로는 못 가져옴)"},
         ],
+        "flows_note": "TODO: 수급 요약 한 줄",
+        "flows_source": "자료: 한국거래소, 언론 보도.",
         "sectors": sector_snapshot(ds),
-        "issue_stocks": top_movers(ds),
-        "calendar": {"days": [], "next_week": ""},
+        "sector_analysis": "TODO: 업종 동향 분석 한 문단",
+        "checkpoints": top_movers(ds),
+        "calendar": [],
         "notes": "특이사항 없음",
     }
     if chart_png_path:

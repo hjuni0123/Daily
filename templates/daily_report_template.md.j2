@@ -1,53 +1,53 @@
 **한양증권** · DAILY MARKET WRAP · {{ branch_name }}
 
-**[{{ eyebrow }}]**
-# {{ title }}
-{{ subtitle }}
+{{ date_full }} 장 마감 기준 · {{ branch_name }} {{ department }} {{ author }} · {{ contact }}
 
-{{ branch_name }} {{ department }} · {{ author }} · {{ contact }}
+# {{ title }}
+{{ lead }}
 
 ---
 
-## Ⅰ. 지수 · 시장 지표
-국내 지수·환율은 {{ date_short }} 종가(한국거래소) · 금·유가는 {{ date_short }} 장중 시세
+## 1. 지수 및 시장 지표
 
-| 구분 | 종가 | 전일비 | 등락률 | 해석 |
+| 구분 | 시가 | 장중 고점 | 종가 | 비고 |
 |---|---:|---:|---:|---|
 {% for i in indicators -%}
-| {{ i.label }} | {{ i.close }} | {{ i.trend_symbol }} {{ i.change_pt }} | {{ i.change_pct }} | {{ i.note }} |
+| {{ i.label }} | {{ i.open }} | {{ i.day_high }} | {{ i.close }} | {{ i.note }} |
 {% endfor %}
 
-## Ⅱ. 업종 동향 맵
-박스 크기 = 업종 시가총액 비중, 색·수치 = 해당 업종 대표종목 등락률 ({{ date_short }} 종가 기준)
+{{ flows_note }} {{ flows_source }}
 
-| 업종 | 등락률 | 비중 | 대표종목 |
+## 2. 업종 동향
+박스 크기 = 업종 시가총액 비중(근사), 색·표시 = {{ date_short }} 방향성
+
+| 업종 | 방향 | 비중 | 상세 |
 |---|---:|---:|---|
 {% for s in sectors -%}
-| {{ s.name }} | {{ s.change_pct }}% | {{ s.weight_pct }}% | {{ s.top_stock }} |
+| {{ s.name }} | {{ s.bucket }} | {{ s.weight_pct }}% | {{ s.detail }} |
 {% endfor %}
 
-## Ⅲ. 이슈 종목 — 왜 움직였고, 이어질 것인가
+자료: 한국거래소 업종지수, 언론 보도 종합
 
-| 종목 | 등락률 | 이유 | 지속성 | 언제·무엇을 확인 |
-|---|---:|---|---|---|
-{% for s in issue_stocks -%}
-| {{ s.name }} | {{ s.trend_symbol }} {{ s.change_pct }}% | {{ s.reason }} | {{ s.persistence }} | {{ s.checkpoint }} |
-{% endfor %}
+{{ sector_analysis }}
 
-## Ⅳ. 이번 주 캘린더
-시각은 한국시간(KST) · ★★★ = 지수 방향을 바꿀 수 있는 이벤트
+## 3. 이번 주 일정
+시각은 한국시간(KST) 기준
 
-{% for d in calendar.days -%}
-**{{ d.date }} {{ d.dow }}**
-{% for e in d.events -%}
-- {{ e.time }}{% if e.stars %} {{ e.stars }}{% endif %} {{ e.title }}{% if e.note %} — {{ e.note }}{% endif %}
-{% endfor %}
-{% if d.footer %}_{{ d.footer }}_
+{% for c in calendar -%}
+**{{ c.date }} {{ c.dow }}** — {{ c.headline }}
+{{ c.detail }}
+{% if c.footer %}_{{ c.footer }}_
 {% endif %}
 {% endfor %}
-{% if calendar.next_week %}
-**다음 주 예고** {{ calendar.next_week }}
-{% endif %}
+
+## 4. 금일 체크포인트
+작성자 개인 견해이며 투자권유가 아닙니다
+
+| 섹터 | 관심 종목 | 오늘의 관점 | 근거 |
+|---|---|---|---|
+{% for c in checkpoints -%}
+| {{ c.sector }} | {{ c.stocks }} | {{ c.view }} | {{ c.rationale }} |
+{% endfor %}
 
 ## 참고사항
 

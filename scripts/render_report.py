@@ -11,7 +11,9 @@
 """
 import argparse
 import base64
+import datetime
 import json
+import re
 import sys
 from pathlib import Path
 
@@ -27,11 +29,6 @@ TREEMAP_DY = 300.0
 # templates/daily_report_template.html.j2 의 .heatmap { height: ... } 와 맞춰야 한다.
 HEATMAP_CSS_HEIGHT_PX = 260
 COMPACT_BOX_THRESHOLD_PX = 40
-
-PERSISTENCE_CLASS = {
-    "높음": "pill-strong",
-    "중립": "pill-neutral",
-}
 
 
 def asset_data_uri(filename: str, mime: str) -> str:
@@ -85,6 +82,23 @@ def with_trend(d: dict, field: str = "change_pt") -> dict:
     return d
 
 
+def with_indicator_trend(i: dict) -> dict:
+    """종가(close) 칸의 색상 판단 기준.
+
+    - close 자체가 등락률(%)인 지표(WTI/필라델피아 반도체 등, 해외 지표라
+      가격 대신 등락률만 표기)는 close를 그대로 부호 판단에 쓴다.
+    - close가 실제 가격/지수값인 지표(코스피/코스닥/원달러 등)는 가격의
+      부호가 항상 양수라 그대로 쓰면 늘 "상승"으로 잘못 칠해진다 — 별도
+      change_pct(전일대비 등락률, 화면에는 표시하지 않는 내부용 필드)가
+      있으면 그걸로 판단하고, 없으면(예: "HTS 확인") 색을 매기지 않는다.
+    """
+    i = dict(i)
+    basis = i["change_pct"] if i.get("change_pct") not in (None, "") else i.get("close")
+    i["trend_class"] = trend_class(basis)
+    i["trend_symbol"] = trend_symbol(basis)
+    return i
+
+
 def heat_class(change_pct) -> str:
     v = _as_float(change_pct)
     if v is None:
@@ -104,9 +118,33 @@ def heat_class(change_pct) -> str:
     return "heat-down-3"
 
 
+def bucket_heat_class(bucket) -> str:
+    """업종 방향성이 정확한 등락률(%) 대신 '강보합'/'+1%대'/'약보합' 같은 버킷
+    라벨로 주어질 때 색상 클래스를 매긴다."""
+    b = str(bucket or "").strip()
+    if "상한가" in b or "급등" in b:
+        return "heat-up-3"
+    if "하한가" in b or "급락" in b:
+        return "heat-down-3"
+    m = re.search(r"\+([0-9.]+)", b)
+    if m:
+        return "heat-up-2" if float(m.group(1)) >= 2 else "heat-up-1"
+    m = re.search(r"[−\-]([0-9.]+)", b)
+    if m:
+        return "heat-down-2" if float(m.group(1)) >= 2 else "heat-down-1"
+    if "강보합" in b:
+        return "heat-up-1"
+    if "약보합" in b:
+        return "heat-down-1"
+    return "heat-flat"
+
+
 def with_heat(sector: dict) -> dict:
     sector = dict(sector)
-    sector["heat_class"] = heat_class(sector.get("change_pct"))
+    if "bucket" in sector:
+        sector["heat_class"] = bucket_heat_class(sector.get("bucket"))
+    else:
+        sector["heat_class"] = heat_class(sector.get("change_pct"))
     sector.setdefault("weight", 1)
     return sector
 
@@ -134,42 +172,18 @@ def build_treemap(sectors: list) -> list:
     return out
 
 
-def with_persistence(stock: dict) -> dict:
-    stock = dict(stock)
-    stock["persistence_class"] = PERSISTENCE_CLASS.get(stock.get("persistence"), "pill-weak")
-    return stock
-
-
-def build_calendar(calendar) -> dict:
-    """요일별(월~금) 그리드 캘린더. 각 날짜에 이벤트 여러 개, 하단에 한 줄 요약(footer)이
-    올 수 있고, 전체 아래에 '다음 주 예고' 한 줄이 붙는다."""
-    calendar = dict(calendar) if isinstance(calendar, dict) else {}
-    days = []
-    for d in calendar.get("days", []):
-        d = dict(d)
-        events = []
-        for e in d.get("events", []):
-            e = dict(e)
-            n = int(e.get("importance", 0) or 0)
-            e["stars"] = "★" * n if n > 0 else ""
-            events.append(e)
-        d["events"] = events
-        days.append(d)
-    calendar["days"] = days
-    calendar.setdefault("next_week", "")
-    return calendar
+WEEKDAY_KO = ["월", "화", "수", "목", "금", "토", "일"]
 
 
 def build_context(data: dict) -> dict:
     ctx = dict(data)
 
     if "indicators" in ctx:
-        ctx["indicators"] = [with_trend(i, "change_pt") for i in ctx["indicators"]]
-    if "issue_stocks" in ctx:
-        ctx["issue_stocks"] = [with_persistence(with_trend(s, "change_pct")) for s in ctx["issue_stocks"]]
+        ctx["indicators"] = [with_indicator_trend(i) for i in ctx["indicators"]]
     if "sectors" in ctx:
         ctx["sectors"] = build_treemap([with_heat(s) for s in ctx["sectors"]])
-    ctx["calendar"] = build_calendar(ctx.get("calendar"))
+    ctx.setdefault("calendar", [])
+    ctx.setdefault("checkpoints", [])
 
     ctx.setdefault("branch_name", "인천프리미어지점")
     # 참고: 한양증권 공식 점포 안내상 명칭은 "인천프리미어센터"이나, 사용자 제공
@@ -177,17 +191,20 @@ def build_context(data: dict) -> dict:
     ctx.setdefault("department", "인턴")
     ctx.setdefault("author", "김형준")
     ctx.setdefault("contact", "khj1227@hygood.co.kr")
-    ctx.setdefault("eyebrow", "시장 마감 브리프")
     ctx.setdefault("title", "")
-    ctx.setdefault("subtitle", "")
+    ctx.setdefault("lead", "")
     ctx.setdefault("indicators", [])
     ctx.setdefault("sectors", [])
-    ctx.setdefault("issue_stocks", [])
+    ctx.setdefault("sector_analysis", "")
+    ctx.setdefault("flows_note", "")
+    ctx.setdefault("flows_source", "")
     ctx.setdefault("notes", "특이사항 없음")
 
     if "date" in ctx:
         y, m, d = ctx["date"].split("-")
         ctx["date_short"] = f"{int(m)}/{int(d)}"
+        dow = WEEKDAY_KO[datetime.date(int(y), int(m), int(d)).weekday()]
+        ctx["date_full"] = f"{int(y)}년 {int(m)}월 {int(d)}일({dow})"
 
     ctx["logo_full_color"] = logo_data_uri("hy_logo_full_color.png")
     ctx["logo_full_white"] = logo_data_uri("hy_logo_full_white.png")

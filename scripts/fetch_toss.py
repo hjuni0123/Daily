@@ -58,33 +58,42 @@ def _get(path: str, params: dict) -> dict:
 
 
 def index_indicator(symbol: str, label: str) -> dict:
-    """market-indicators candles(1d, count=2)로 종가/전일비를 계산한다."""
+    """market-indicators candles(1d, count=2)로 시가/장중고점/종가와 전일대비를
+    계산한다. open/day_high는 candle에 openPrice/highPrice 필드가 없는 심볼이면
+    "-"로 남는다(가격 자체는 없어도 렌더링은 깨지지 않는다).
+    change_pct는 화면에 그대로 표시되진 않고(비고에 서술로 녹여 쓰거나 Claude가
+    참고), render_report.py가 종가 칸 색상(상승/하락)을 매기는 데만 쓰인다."""
     result = _get(f"/api/v1/market-indicators/{symbol}/candles", {"interval": "1d", "count": 2})
     candles = result["candles"]
     if len(candles) < 2:
         raise RuntimeError(f"{symbol} 캔들이 2개 미만 — 전일 종가 계산 불가")
-    close = float(candles[0]["closePrice"])
-    prev_close = float(candles[1]["closePrice"])
+    today, prev = candles[0], candles[1]
+    close = float(today["closePrice"])
+    prev_close = float(prev["closePrice"])
     change_pt = close - prev_close
     change_pct = change_pt / prev_close * 100
+    open_px = today.get("openPrice")
+    high_px = today.get("highPrice")
     return {
         "label": label,
+        "open": f"{float(open_px):,.2f}" if open_px is not None else "-",
+        "day_high": f"{float(high_px):,.2f}" if high_px is not None else "-",
         "close": f"{close:,.2f}",
-        "change_pt": f"{change_pt:+,.2f}",
-        "change_pct": f"{change_pct:+.2f}%",
-        "note": "TODO: 왜 이렇게 움직였는지 한 줄",
+        "change_pct": f"{change_pct:+.2f}",
+        "note": f"TODO: 왜 이렇게 움직였는지 한 줄 (전일비 {change_pt:+,.2f}, {change_pct:+.2f}%)",
     }
 
 
 def exchange_rate_indicator() -> dict:
+    """Toss 환율 엔드포인트는 현재가만 주고 시가/고점/전일비는 없어 "-"로 둔다."""
     result = _get("/api/v1/exchange-rate", {"baseCurrency": "USD", "quoteCurrency": "KRW"})
     rate = float(result["rate"])
     return {
         "label": "원/달러 환율",
+        "open": "-",
+        "day_high": "-",
         "close": f"{rate:,.2f}",
-        "change_pt": "-",
-        "change_pct": "-",
-        "note": "TODO (전일대비는 API로 못 가져옴 — 필요하면 뉴스로 채우기)",
+        "note": "TODO (시가/전일대비는 API로 못 가져옴 — 필요하면 뉴스로 채우기)",
     }
 
 
@@ -126,8 +135,8 @@ def stock_names(symbols: list) -> dict:
 # 죽지 않도록 각각 빈 리스트/None을 반환하고, 실패 사유를 stderr에 남긴다.
 
 COMMODITY_CANDIDATES = {
-    "국제 금 (현물)": ["XAUUSD", "GOLD", "GC", "XAU"],
     "WTI 원유": ["WTI", "USOIL", "CL", "WTICRUDE"],
+    "필라델피아 반도체": ["SOX", "PHLX", "SOXX", "SMH"],
 }
 
 
@@ -178,7 +187,8 @@ def sector_indicators() -> list:
             weight = it.get("weight") or it.get("marketCapWeight")
             if name is None or change_pct is None:
                 continue
-            entry = {"name": name, "change_pct": f"{float(change_pct) * (100 if abs(float(change_pct)) < 1 else 1):+.2f}"}
+            pct = float(change_pct) * (100 if abs(float(change_pct)) < 1 else 1)
+            entry = {"name": name, "bucket": f"{pct:+.2f}%", "detail": ""}
             if weight is not None:
                 entry["weight"] = float(weight)
             out.append(entry)
@@ -194,10 +204,11 @@ def sector_indicators() -> list:
 MIN_TRADING_AMOUNT_KRW = 3_000_000_000  # 30억원 미만 거래대금은 제외 (품질 낮은 픽 방지)
 
 
-def top_movers(n: int = 3) -> list:
-    """등락률 상위(급상승/급하락) 후보를 가져오되, 투자유의종목(관리종목·정리매매 등 —
-    가격제한폭이 없어 ±30%를 벗어나는 비정상적인 등락이 나올 수 있음)과 거래대금이
-    너무 적은 종목은 제외한다. 여유 있게 더 뽑은 뒤 필터링해서 n개를 채운다."""
+def top_movers(n: int = 4) -> list:
+    """등락률 상위(급상승/급하락) 후보를 "금일 체크포인트" 표의 초안(섹터/관심종목)으로
+    쓴다 — 투자유의종목(관리종목·정리매매 등, 가격제한폭이 없어 ±30%를 벗어나는
+    비정상적 등락이 나올 수 있음)과 거래대금이 너무 적은 종목은 제외한다.
+    "오늘의 관점"·"근거"는 판단이 필요해 TODO로 남기고 fill_with_claude.py가 채운다."""
     fetch_n = max(n * 3, 10)
     gainers = _get("/api/v1/rankings", {
         "type": "TOP_GAINERS", "marketCountry": "KR", "duration": "1d",
@@ -219,12 +230,10 @@ def top_movers(n: int = 3) -> list:
     for p in picks:
         change_pct = float(p["price"]["changeRate"]) * 100
         out.append({
-            "name": names.get(p["symbol"], p["symbol"]),
-            "ticker": p["symbol"],
-            "change_pct": f"{change_pct:+.2f}",
-            "reason": "TODO: 왜 움직였는지 직접 채우기 (뉴스/사내 정보 기준)",
-            "persistence": "중립",
-            "checkpoint": "TODO",
+            "sector": "TODO",
+            "stocks": f"{names.get(p['symbol'], p['symbol'])}({p['symbol']}, {change_pct:+.2f}%)",
+            "view": "TODO",
+            "rationale": "TODO: 왜 움직였는지, 오늘의 관점과 근거를 직접 채우기 (뉴스/사내 정보 기준)",
         })
     return out
 
@@ -249,7 +258,6 @@ def main():
     toss_client._load_env_file(ROOT / ".env")
 
     today = datetime.date.today()
-    weekday = "월화수목금토일"[today.weekday()]
 
     print("코스피/코스닥 지수 조회 중...", file=sys.stderr)
     kospi = index_indicator("KOSPI", "KOSPI")
@@ -265,17 +273,17 @@ def main():
         "futures": "-",
     }
 
-    print("등락률 상위 종목 조회 중...", file=sys.stderr)
-    issue_stocks = top_movers()
+    print("금일 체크포인트 초안(등락률 상위 종목) 조회 중...", file=sys.stderr)
+    checkpoints = top_movers()
 
-    print("국제 금/WTI 원유 조회 시도 중(EXPERIMENTAL)...", file=sys.stderr)
-    gold = commodity_indicator("국제 금 (현물)") or {
-        "label": "국제 금 (현물)", "close": "-", "change_pt": "-", "change_pct": "-",
-        "note": "TODO (자동 조회 실패 — 뉴스로 채우기)",
-    }
+    print("WTI 원유/필라델피아 반도체 조회 시도 중(EXPERIMENTAL)...", file=sys.stderr)
     wti = commodity_indicator("WTI 원유") or {
-        "label": "WTI 원유", "close": "-", "change_pt": "-", "change_pct": "-",
-        "note": "TODO (자동 조회 실패 — 뉴스로 채우기)",
+        "label": "WTI 원유", "open": "-", "day_high": "-", "close": "-",
+        "note": "TODO (자동 조회 실패 — 뉴스로 채우기, 미국장 기준이라 전일 종가를 씀)",
+    }
+    philly = commodity_indicator("필라델피아 반도체") or {
+        "label": "필라델피아 반도체", "open": "-", "day_high": "-", "close": "-",
+        "note": "TODO (자동 조회 실패 — 뉴스로 채우기, 미국장 기준이라 전일 종가를 씀)",
     }
 
     print("업종(sectors) 조회 시도 중(EXPERIMENTAL)...", file=sys.stderr)
@@ -294,23 +302,25 @@ def main():
 
     data = {
         "_note": "fetch_toss.py로 자동 수집(토스증권 Open API). TODO 표시된 정성적 필드"
-                 "(제목/이유/지속성/캘린더)는 직접 채우거나 fill_with_claude.py로 채울 것."
-                 " sectors/국제 금/WTI는 EXPERIMENTAL 자동 조회를 시도했다 — 비어있거나"
-                 " '-'면 stderr 로그를 확인해 정확한 엔드포인트/심볼을 알려줄 것.",
+                 "(title/lead/checkpoints의 sector·view·rationale/calendar)는 직접 채우거나"
+                 " fill_with_claude.py로 채울 것. sectors/WTI/필라델피아 반도체는"
+                 " EXPERIMENTAL 자동 조회를 시도했다 — 비어있거나 '-'면 stderr 로그를"
+                 " 확인해 정확한 엔드포인트/심볼을 알려줄 것.",
         "date": today.isoformat(),
-        "weekday": weekday,
         "branch_name": "인천프리미어지점",
         "department": "인턴",
         "author": "김형준",
         "contact": "khj1227@hygood.co.kr",
-        "eyebrow": "시장 마감 브리프",
         "title": "TODO: 오늘 시장을 관통하는 한 문장",
-        "subtitle": "TODO",
-        "indicators": [kospi, kosdaq, fx, gold, wti],
+        "lead": "TODO: 오늘 시황을 요약하는 1~3문장",
+        "indicators": [kospi, kosdaq, fx, wti, philly],
         "flows": flows,
+        "flows_note": "TODO: 수급 요약 한 줄",
+        "flows_source": "자료: 한국거래소, 서울외국환중개, 언론 보도.",
         "sectors": sectors,
-        "issue_stocks": issue_stocks,
-        "calendar": {"days": [], "next_week": ""},
+        "sector_analysis": "TODO: 업종 동향 분석 한 문단",
+        "checkpoints": checkpoints,
+        "calendar": [],
         "notes": "특이사항 없음",
     }
     if chart_png_path:
