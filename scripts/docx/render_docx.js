@@ -233,12 +233,12 @@ function buildSectorMap(sectorsIn) {
 
   if (sectors.length >= 9) {
     const [big, a1, a2, b1, b2, ...rest] = sectors;
-    rows.push(new TableRow({ children: [sectorCell(big, 5, 2), sectorCell(a1, 4, 1), sectorCell(a2, 3, 1)] }));
-    rows.push(new TableRow({ children: [sectorCell(b1, 4, 1), sectorCell(b2, 3, 1)] }));
+    rows.push(new TableRow({ cantSplit: true, children: [sectorCell(big, 5, 2), sectorCell(a1, 4, 1), sectorCell(a2, 3, 1)] }));
+    rows.push(new TableRow({ cantSplit: true, children: [sectorCell(b1, 4, 1), sectorCell(b2, 3, 1)] }));
 
     const row3 = rest.splice(0, 4);
     if (row3.length) {
-      rows.push(new TableRow({ children: row3.map((s) => sectorCell(s, Math.floor(12 / row3.length), 1)) }));
+      rows.push(new TableRow({ cantSplit: true, children: row3.map((s) => sectorCell(s, Math.floor(12 / row3.length), 1)) }));
     }
     while (rest.length) {
       const chunk = rest.splice(0, 6);
@@ -246,6 +246,7 @@ function buildSectorMap(sectorsIn) {
       const lastSpan = 12 - span * (chunk.length - 1);
       rows.push(
         new TableRow({
+          cantSplit: true,
           children: chunk.map((s, i) => sectorCell(s, i === chunk.length - 1 ? lastSpan : span, 1)),
         })
       );
@@ -256,7 +257,7 @@ function buildSectorMap(sectorsIn) {
     const span = Math.floor(GRID_W / perRow);
     for (let i = 0; i < sectors.length; i += perRow) {
       const chunk = sectors.slice(i, i + perRow);
-      rows.push(new TableRow({ children: chunk.map((s) => sectorCell(s, span, 1)) }));
+      rows.push(new TableRow({ cantSplit: true, children: chunk.map((s) => sectorCell(s, span, 1)) }));
     }
   }
 
@@ -270,6 +271,7 @@ function buildIssueTable(stocks) {
     const t = trend(s.change_pct);
     rows.push(
       new TableRow({
+        cantSplit: true,
         children: [
           cell({ children: p([run(s.name, { size: 16, bold: true })]), width: widths[0] }),
           cell({ children: p([run(`${t.symbol} ${s.change_pct}%`, { size: 16, color: t.color, bold: true })], { alignment: AlignmentType.RIGHT }), width: widths[1] }),
@@ -291,6 +293,7 @@ function buildCalendarGrid(calendar) {
   const widths = Array.from({ length: n }, () => colW);
 
   const head = new TableRow({
+    cantSplit: true,
     children: days.map((d) =>
       cell({
         children: p(
@@ -305,6 +308,7 @@ function buildCalendarGrid(calendar) {
   });
 
   const body = new TableRow({
+    cantSplit: true,
     children: days.map((d) => {
       const paras = [];
       (d.events || []).forEach((e) => {

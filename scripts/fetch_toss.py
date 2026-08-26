@@ -11,10 +11,18 @@ client_secret을 form 바디로 전달)과 각 엔드포인트는 공식 문서
 가져올 수 있는 것: 코스피/코스닥 지수 종가·등락(전일대비), 원/달러 환율(현재가),
 투자자별(개인/외국인/기관) 순매수 대금, 등락률·거래대금 상위 종목, 최근 거래일
 추이 차트.
-가져올 수 없는 것: 업종별 데이터(Toss API에 섹터 엔드포인트가 없음 — sectors는
-빈 채로 남으니 pykrx나 뉴스로 채울 것), 상승/하락 종목수·신용잔고 등 시장폭
-일부, 이슈 종목이 "왜" 움직였는지/지속성/캘린더/지점 대응/SIGNAL·KEY·STEP —
-이 스크립트가 만든 JSON에는 TODO로 남아있으니 직접 채울 것.
+업종(sectors)·국제 금·WTI 원유: 예전엔 "Toss API에 없다"고 단정하고 아예 시도조차
+안 했는데, 이건 검증 없이 넘겨짚은 것이었다(토스 앱/서드파티 CLI에서 업종·테마
+데이터가 실제로 보이는 걸 보면 어딘가엔 있을 가능성이 높다). 그래서 지금은
+sector_indicators()/commodity_indicator()가 몇 가지 가능성 있는 엔드포인트·심볼을
+실제로 "시도"해보고, 성공하면 채우고 실패하면 그 실패 원인(HTTP 상태/응답 본문)을
+stderr에 그대로 찍는다 — 이 스크립트는 KRX/토스 API 접근이 막힌 샌드박스에서
+작성됐기 때문에 실제로 맞는 엔드포인트인지 한 번도 검증하지 못했다. 로컬에서
+처음 돌려보고 sectors가 비거나 실패 로그가 찍히면, 그 stderr 내용을 그대로
+공유해주면 정확한 엔드포인트로 고칠 수 있다.
+가져올 수 없는 것: 상승/하락 종목수·신용잔고 등 시장폭 일부, 이슈 종목이 "왜"
+움직였는지/지속성/캘린더 — 이 스크립트가 만든 JSON에는 TODO로 남아있으니
+직접 채우거나 fill_with_claude.py로 채울 것.
 
 사용법:
     python3 scripts/fetch_toss.py --out data/2026-08-24.json
@@ -113,6 +121,76 @@ def stock_names(symbols: list) -> dict:
         return {}
 
 
+# --- 아래 두 함수는 EXPERIMENTAL이다: 이 환경에서 Toss API 서버 접근이 막혀 있어
+# 실제로 맞는 경로/심볼인지 한 번도 검증하지 못했다. 실패해도 스크립트 전체가
+# 죽지 않도록 각각 빈 리스트/None을 반환하고, 실패 사유를 stderr에 남긴다.
+
+COMMODITY_CANDIDATES = {
+    "국제 금 (현물)": ["XAUUSD", "GOLD", "GC", "XAU"],
+    "WTI 원유": ["WTI", "USOIL", "CL", "WTICRUDE"],
+}
+
+
+def commodity_indicator(label: str) -> dict | None:
+    """국제 금/WTI를 KOSPI/KOSDAQ과 같은 market-indicators/candles 엔드포인트로
+    시도해본다 — 심볼 이름만 다를 뿐 같은 엔드포인트 구조일 가능성이 있어서다.
+    후보 심볼을 순서대로 시도하고, 하나라도 성공하면 어떤 심볼이 맞았는지
+    stderr에 남긴다(다음부터는 그 심볼을 바로 쓰도록 코드에 반영할 것)."""
+    last_err = None
+    for symbol in COMMODITY_CANDIDATES.get(label, []):
+        try:
+            ind = index_indicator(symbol, label)
+            print(f"  성공: {label} <- 심볼 '{symbol}' (이 심볼로 코드에 고정하세요)", file=sys.stderr)
+            return ind
+        except Exception as e:
+            last_err = e
+    print(f"경고: {label} 후보 심볼 {COMMODITY_CANDIDATES.get(label, [])} 모두 실패"
+          f"(마지막 오류: {last_err}) — '-'로 남김. developers.tossinvest.com에서 정확한"
+          f" 심볼/엔드포인트를 확인해 알려주면 코드에 반영하겠습니다.", file=sys.stderr)
+    return None
+
+
+SECTOR_ENDPOINT_CANDIDATES = [
+    "/api/v1/sectors",
+    "/api/v1/sectors/rankings",
+    "/api/v1/market-indicators/sectors",
+    "/api/v1/industries",
+]
+
+
+def sector_indicators() -> list:
+    """업종별 등락률·비중을 시도해본다. 정확한 경로를 몰라 후보를 순서대로
+    찔러보고, 응답 스키마도 모르니 흔한 필드명(name/change_pct 등 몇 가지 후보)을
+    관대하게 시도한다. 다 실패하면 빈 리스트 — sectors 히트맵은 비게 된다."""
+    for path in SECTOR_ENDPOINT_CANDIDATES:
+        try:
+            result = _get(path, {"marketCountry": "KR"})
+        except Exception as e:
+            print(f"  시도 실패: {path} ({e})", file=sys.stderr)
+            continue
+        items = result if isinstance(result, list) else result.get("sectors") or result.get("rankings") or []
+        if not items:
+            continue
+        out = []
+        for it in items:
+            name = it.get("name") or it.get("sectorName")
+            change_pct = it.get("changeRate") or it.get("changePct") or it.get("change_pct")
+            weight = it.get("weight") or it.get("marketCapWeight")
+            if name is None or change_pct is None:
+                continue
+            entry = {"name": name, "change_pct": f"{float(change_pct) * (100 if abs(float(change_pct)) < 1 else 1):+.2f}"}
+            if weight is not None:
+                entry["weight"] = float(weight)
+            out.append(entry)
+        if out:
+            print(f"  성공: {path} 에서 업종 {len(out)}개 (이 경로로 코드에 고정하세요)", file=sys.stderr)
+            return out
+    print("경고: 업종(sectors) 후보 엔드포인트 모두 실패 — sectors는 빈 채로 둡니다."
+          " developers.tossinvest.com 문서에서 정확한 경로/응답 스키마를 확인해"
+          " 알려주면 코드에 반영하겠습니다.", file=sys.stderr)
+    return []
+
+
 MIN_TRADING_AMOUNT_KRW = 3_000_000_000  # 30억원 미만 거래대금은 제외 (품질 낮은 픽 방지)
 
 
@@ -190,6 +268,19 @@ def main():
     print("등락률 상위 종목 조회 중...", file=sys.stderr)
     issue_stocks = top_movers()
 
+    print("국제 금/WTI 원유 조회 시도 중(EXPERIMENTAL)...", file=sys.stderr)
+    gold = commodity_indicator("국제 금 (현물)") or {
+        "label": "국제 금 (현물)", "close": "-", "change_pt": "-", "change_pct": "-",
+        "note": "TODO (자동 조회 실패 — 뉴스로 채우기)",
+    }
+    wti = commodity_indicator("WTI 원유") or {
+        "label": "WTI 원유", "close": "-", "change_pt": "-", "change_pct": "-",
+        "note": "TODO (자동 조회 실패 — 뉴스로 채우기)",
+    }
+
+    print("업종(sectors) 조회 시도 중(EXPERIMENTAL)...", file=sys.stderr)
+    sectors = sector_indicators()
+
     out_path = Path(args.out)
     chart_path = Path(args.chart_out) if args.chart_out else out_path.with_suffix(".chart.png")
     try:
@@ -203,8 +294,9 @@ def main():
 
     data = {
         "_note": "fetch_toss.py로 자동 수집(토스증권 Open API). TODO 표시된 정성적 필드"
-                 "(제목/이유/지속성/캘린더)와 sectors(업종, Toss API 미지원 — pykrx나 뉴스로"
-                 " change_pct/weight/top_stock 채울 것)는 직접 채우거나 뉴스 조사로 채울 것.",
+                 "(제목/이유/지속성/캘린더)는 직접 채우거나 fill_with_claude.py로 채울 것."
+                 " sectors/국제 금/WTI는 EXPERIMENTAL 자동 조회를 시도했다 — 비어있거나"
+                 " '-'면 stderr 로그를 확인해 정확한 엔드포인트/심볼을 알려줄 것.",
         "date": today.isoformat(),
         "weekday": weekday,
         "branch_name": "인천프리미어지점",
@@ -214,13 +306,9 @@ def main():
         "eyebrow": "시장 마감 브리프",
         "title": "TODO: 오늘 시장을 관통하는 한 문장",
         "subtitle": "TODO",
-        "indicators": [
-            kospi, kosdaq, fx,
-            {"label": "국제 금 (현물)", "close": "-", "change_pt": "-", "change_pct": "-", "note": "TODO (Toss API 미지원 — 뉴스로 채우기)"},
-            {"label": "WTI 원유", "close": "-", "change_pt": "-", "change_pct": "-", "note": "TODO (Toss API 미지원 — 뉴스로 채우기)"},
-        ],
+        "indicators": [kospi, kosdaq, fx, gold, wti],
         "flows": flows,
-        "sectors": [],
+        "sectors": sectors,
         "issue_stocks": issue_stocks,
         "calendar": {"days": [], "next_week": ""},
         "notes": "특이사항 없음",
